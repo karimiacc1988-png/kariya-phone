@@ -1068,4 +1068,21 @@
         <item>50e603d333c6049a37bd751375d08f3bd0abebd33facd30bd17b64b89658b421,
             com.google.android.apps.automotive.templates.host</item>
         </string-array>
+
+    <!-- ===== صفحه ورود کاریا تلفن ===== -->
+    <string name="kariya_login_subtitle">برای ورود، شماره موبایلی که در کاریا حساب ثبت شده را وارد کنید.</string>
+    <string name="kariya_login_mobile_label">شماره موبایل</string>
+    <string name="kariya_login_mobile_hint">09121234567</string>
+    <string name="kariya_login_send_code">دریافت کد</string>
+    <string name="kariya_login_code_hint">کد را وارد کنید</string>
+    <string name="kariya_login_verify">ورود</string>
+    <string name="kariya_login_change_mobile">شماره را عوض می‌کنم</string>
+    <string name="kariya_login_code_sent_bale">کد در پیام‌رسان بله به %1$s فرستاده شد.</string>
+    <string name="kariya_login_code_sent_sms">کد پیامکی به %1$s فرستاده شد.</string>
+    <string name="kariya_login_bad_mobile">شماره موبایل کامل نیست.</string>
+    <string name="kariya_login_bad_code">کد را وارد کنید.</string>
+    <string name="kariya_login_no_extension">برای این شماره داخلی تعریف نشده است.</string>
+    <string name="kariya_login_server_error">سرور پاسخ نداد. کمی بعد دوباره امتحان کنید.</string>
+    <string name="kariya_login_no_network">اتصال به اینترنت برقرار نشد.</string>
+    <string name="kariya_login_register_failed">ورود انجام شد ولی اتصال به مرکز تلفن برقرار نشد.</string>
 </resources>

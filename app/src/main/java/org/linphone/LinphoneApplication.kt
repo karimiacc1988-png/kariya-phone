@@ -19,6 +19,8 @@
  */
 package org.linphone
 
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
@@ -59,6 +61,15 @@ class LinphoneApplication : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         super.onCreate()
         val context = applicationContext
+
+        /*
+         * اپ همیشه فارسی است، هرچه زبان گوشی باشد.
+         *
+         * ⚠️ عمداً به زبان گوشی سپرده نشده: کارمندی که گوشی‌اش انگلیسی است هم
+         * باید همان چیزی را ببیند که بقیه می‌بینند، وگرنه راهنمای واحدی برای
+         * پشتیبانی نمی‌ماند.
+         */
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("fa"))
 
         val powerManager = context.getSystemService(POWER_SERVICE) as PowerManager
         val wakeLock = powerManager.newWakeLock(

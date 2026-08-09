@@ -3,7 +3,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/assistant_nav_graph"
-    app:startDestination="@id/landingFragment">
+    app:startDestination="@id/kariyaLoginFragment">
+
+    <!--
+      تنها صفحه ورودی که کارمند می‌بیند. صفحه‌های لینفون (landing، ثبت‌نام،
+      بازیابی حساب، هشدار حساب غیر لینفونی) در گراف می‌مانند ولی دیگر از
+      هیچ‌جا به آن‌ها راهی نیست.
+    -->
+    <fragment
+        android:id="@+id/kariyaLoginFragment"
+        android:name="org.linphone.ui.assistant.fragment.KariyaLoginFragment"
+        android:label="KariyaLoginFragment"
+        tools:layout="@layout/assistant_kariya_login_fragment" />
 
     <fragment
         android:id="@+id/registerFragment"

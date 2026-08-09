@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  صفحه ورود «کاریا تلفن».
+
+  تنها صفحه‌ای که کارمند می‌بیند: شماره موبایلش را می‌زند، کدی که می‌آید را
+  وارد می‌کند، تمام. داخلی و رمز SIP را نه می‌بیند و نه لازم است بداند —
+  سرور آن‌ها را می‌دهد و اپ خودش حساب را می‌سازد.
+-->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/bc_white"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layoutDirection="rtl"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp"
+            android:paddingTop="48dp"
+            android:paddingBottom="32dp">
+
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="104dp"
+                android:layout_height="104dp"
+                android:layout_marginBottom="18dp"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/kariya_splash_logo" />
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textColor="@color/orange_main_500"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="28dp"
+                android:gravity="center"
+                android:text="@string/kariya_login_subtitle"
+                android:textColor="@color/gray_500"
+                android:textSize="13sp" />
+
+            <!-- پله یک: شماره موبایل -->
+            <LinearLayout
+                android:id="@+id/step_mobile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="6dp"
+                    android:text="@string/kariya_login_mobile_label"
+                    android:textColor="@color/gray_600"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/mobile"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:autofillHints="phone"
+                    android:background="@drawable/edit_text_background"
+                    android:gravity="center"
+                    android:hint="@string/kariya_login_mobile_hint"
+                    android:inputType="phone"
+                    android:maxLength="11"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:textDirection="ltr"
+                    android:textSize="18sp" />
+
+                <Button
+                    android:id="@+id/send_code"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/kariya_login_send_code"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <!-- پله دو: کدی که آمده -->
+            <LinearLayout
+                android:id="@+id/step_code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/code_sent_to"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:gravity="center"
+                    android:textColor="@color/gray_600"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/code"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:background="@drawable/edit_text_background"
+                    android:gravity="center"
+                    android:hint="@string/kariya_login_code_hint"
+                    android:inputType="number"
+                    android:maxLength="8"
+                    android:textDirection="ltr"
+                    android:textSize="20sp" />
+
+                <Button
+                    android:id="@+id/verify_code"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/kariya_login_verify"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/change_mobile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="16dp"
+                    android:padding="8dp"
+                    android:text="@string/kariya_login_change_mobile"
+                    android:textColor="@color/orange_main_500"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <ProgressBar
+                android:id="@+id/progress"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginTop="22dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:gravity="center"
+                android:textColor="@color/red_danger_500"
+                android:textSize="13sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </ScrollView>
+</layout>
