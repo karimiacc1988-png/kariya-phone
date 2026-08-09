@@ -112,8 +112,11 @@ android {
         manifestPlaceholders["appAuthRedirectScheme"] = packageName
 
         ndk {
+            // فقط پردازنده ۶۴ بیتی — تقریبا همه گوشی‌های امروزی همین هستند
+            // و حجم فایل را نصف می‌کند. اگر کسی گوشی خیلی قدیمی داشت،
+            // "armeabi-v7a" را هم به این فهرست اضافه کن و دوباره بساز.
             //noinspection ChromeOsAbiSupport
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+            abiFilters += listOf("arm64-v8a")
         }
     }
 
@@ -122,7 +125,7 @@ android {
         variant.outputs
             .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach { output ->
-                output.outputFileName = "linphone-android-${variant.buildType.name}-$gitVersion.apk"
+                output.outputFileName = "kariya-phone-${variant.buildType.name}-$gitVersion.apk"
             }
     }
 

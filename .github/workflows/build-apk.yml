@@ -28,15 +28,35 @@ jobs:
           sdkmanager --install "platforms;android-37.0" "build-tools;37.0.0" "platform-tools"
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
 
+      - name: بازسازی کلید امضا از محرمانه‌ها
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > app/bc-android.keystore
+          ls -l app/bc-android.keystore
+          cat > keystore.properties <<EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=bc-android.keystore
+          EOF
+
       - name: آماده‌سازی gradlew
         run: |
           sed -i 's/\r$//' ./gradlew
           chmod +x ./gradlew
 
-      - name: ساخت APK
-        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
+      - name: ساخت نسخه نهایی
+        run: ./gradlew :app:assembleRelease --stacktrace --no-daemon
 
-      - name: فهرست خروجی‌ها
+      - name: پاک‌کردن کلید از ماشین ساخت
+        if: always()
+        run: rm -f app/bc-android.keystore keystore.properties
+
+      - name: فهرست و اندازه خروجی
         if: always()
         run: find app/build/outputs -name "*.apk" -exec ls -lh {} \; || true
 
@@ -45,7 +65,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kariya-phone-apk
-          path: app/build/outputs/apk/**/*.apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
       - name: بارگذاری گزارش خطا
