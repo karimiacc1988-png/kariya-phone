@@ -28,8 +28,10 @@ jobs:
           sdkmanager --install "platforms;android-37.0" "build-tools;37.0.0" "platform-tools"
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
 
-      - name: اجازه اجرا به gradlew
-        run: chmod +x ./gradlew
+      - name: آماده‌سازی gradlew
+        run: |
+          sed -i 's/\r$//' ./gradlew
+          chmod +x ./gradlew
 
       - name: ساخت APK
         run: ./gradlew :app:assembleDebug --stacktrace --no-daemon

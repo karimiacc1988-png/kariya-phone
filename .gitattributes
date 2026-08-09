@@ -1,0 +1,10 @@
+# اسکریپت‌های اجرایی باید پایان خط یونیکسی داشته باشند وگرنه روی لینوکس اجرا نمی‌شوند
+* text=auto eol=lf
+gradlew text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.png binary
+*.jpg binary
+*.webp binary
+*.keystore binary
