@@ -1,0 +1,57 @@
+name: ساخت اپ کاریا تلفن
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: گرفتن کد
+        uses: actions/checkout@v4
+
+      - name: نصب جاوا ۲۱
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: نصب ابزارهای اندروید
+        uses: android-actions/setup-android@v3
+
+      - name: نصب پلتفرم مورد نیاز پروژه
+        run: |
+          sdkmanager --install "platforms;android-37.0" "build-tools;37.0.0" "platform-tools"
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+
+      - name: اجازه اجرا به gradlew
+        run: chmod +x ./gradlew
+
+      - name: ساخت APK
+        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
+
+      - name: فهرست خروجی‌ها
+        if: always()
+        run: find app/build/outputs -name "*.apk" -exec ls -lh {} \; || true
+
+      - name: بارگذاری APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kariya-phone-apk
+          path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+
+      - name: بارگذاری گزارش خطا
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports
+          path: |
+            app/build/reports/**
+            build/reports/**
+          if-no-files-found: ignore
