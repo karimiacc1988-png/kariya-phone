@@ -3,7 +3,7 @@ name: ساخت اپ کاریا تلفن
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, rework ]
 
 jobs:
   build:
