@@ -21,6 +21,12 @@
         <item name="color_main1_100">@color/orange_main_100</item>
         <item name="color_main1_500">@color/orange_main_500</item>
 
+        <!-- کاریا: رنگِ اصلیِ Material آبیِ کاریا شود، وگرنه دکمه‌ها (مثل «دریافت کد») بنفشِ پیش‌فرض می‌شوند -->
+        <item name="colorPrimary">@color/orange_main_500</item>
+        <item name="colorOnPrimary">@color/bc_white</item>
+        <item name="colorPrimaryContainer">@color/orange_main_500</item>
+        <item name="colorOnPrimaryContainer">@color/bc_white</item>
+
         <item name="color_main2_000">@color/bc_white</item>
         <item name="color_main2_100">@color/gray_main2_100</item>
         <item name="color_main2_200">@color/gray_main2_200</item>

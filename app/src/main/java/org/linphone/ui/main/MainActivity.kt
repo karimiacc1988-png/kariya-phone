@@ -391,17 +391,10 @@ class MainActivity : GenericActivity() {
         }
 
         coreContext.postOnCoreThread { core ->
-            if (corePreferences.firstLaunch) {
-                Log.i("$TAG First time Linphone 6.0 has been started, showing Welcome activity")
-                corePreferences.firstLaunch = false
-                coreContext.postOnMainThread {
-                    try {
-                        startActivity(Intent(this, WelcomeActivity::class.java))
-                    } catch (ise: IllegalStateException) {
-                        Log.e("$TAG Can't start activity: $ise")
-                    }
-                }
-            } else if (core.accountList.isEmpty()) {
+            // کاریا: صفحه‌ی خوش‌آمدِ لینفون (لوگو و شعارِ امن/متن‌باز) حذف شد؛
+            // اپِ حسابدار مستقیم به ورود می‌رود، هیچ ردی از لینفون در شروع نماند.
+            if (corePreferences.firstLaunch) corePreferences.firstLaunch = false
+            if (core.accountList.isEmpty()) {
                 Log.w("$TAG No account found, showing Assistant activity")
                 coreContext.postOnMainThread {
                     try {
