@@ -22,11 +22,11 @@ package org.linphone.ui
 import androidx.annotation.FontRes
 import org.linphone.R
 
+// این enum نامش تاریخی است؛ همه‌ی وزن‌ها حالا فونت کاریا (Yekan Bakh) را می‌دهند.
+// کاریا سه وزن دارد: عادی (۴۰۰)، متوسط (۶۰۰)، ضخیم (۷۰۰).
 enum class NotoSansFont(@FontRes val fontRes: Int) {
-    // NotoSansLight(R.font.noto_sans_light), // 300
-    NotoSansRegular(R.font.noto_sans_regular), // 400
-    NotoSansMedium(R.font.noto_sans_medium), // 500
-    // NotoSansSemiBold(R.font.noto_sans_semi_bold), // 600
-    NotoSansBold(R.font.noto_sans_bold), // 700
-    NotoSansExtraBold(R.font.noto_sans_extra_bold) // 800
+    NotoSansRegular(R.font.kariya), // 400
+    NotoSansMedium(R.font.kariya_medium), // 500/600
+    NotoSansBold(R.font.kariya_bold), // 700
+    NotoSansExtraBold(R.font.kariya_bold) // 800
 }

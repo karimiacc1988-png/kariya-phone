@@ -384,13 +384,15 @@ class CorePreferences
     val hideSipAddresses: Boolean
         get() = config.getBool("ui", "hide_sip_addresses", false)
 
+    // کاریا تلفن فقط تلفن است: چت و جلسات خاموش‌اند (پیش‌فرض true).
+    // این تب‌ها، اعلان‌هایشان و تنظیماتشان را یکجا برمی‌دارد.
     @get:AnyThread
     val disableChat: Boolean
-        get() = config.getBool("ui", "disable_chat_feature", false)
+        get() = config.getBool("ui", "disable_chat_feature", true)
 
     @get:AnyThread
     val disableMeetings: Boolean
-        get() = config.getBool("ui", "disable_meetings_feature", false)
+        get() = config.getBool("ui", "disable_meetings_feature", true)
 
     @get:AnyThread
     val disableBroadcasts: Boolean
