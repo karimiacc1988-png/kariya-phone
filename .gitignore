@@ -12,3 +12,13 @@ app/release/
 .idea/
 app/bc-android.keystore
 .kotlin/
+
+# --- kariya additions ---
+# کلید امضای واقعی هرگز به گیت نرود (رمزش جداست)
+kariya-release.jks
+web-panel/public/api/_config.php
+# تکه‌های آپلود CDN و لاگ‌های ساخت
+parts/
+parts2/
+parts3/
+*.log
