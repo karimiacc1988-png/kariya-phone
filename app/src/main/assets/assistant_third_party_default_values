@@ -24,12 +24,14 @@
     <entry name="lime_algo" overwrite="true"></entry>
     <entry name="supported" overwrite="true">outbound</entry>
   </section>
+  <!-- کاریا: بدون ICE/STUN و بدون رمزنگاری. مرکز تلفن ایزابل با comedia (RTP متقارن)
+       آدرس واقعی را خودش یاد می‌گیرد؛ STUN لینفون هم از ایران بسته است و صدا را می‌شکست. -->
   <section name="nat_policy_default_values">
-    <entry name="stun_server" overwrite="true">stun.linphone.org</entry>
-    <entry name="protocols" overwrite="true">stun,ice</entry>
+    <entry name="stun_server" overwrite="true"></entry>
+    <entry name="protocols" overwrite="true"></entry>
   </section>
   <section name="sip">
-    <entry name="media_encryption">srtp</entry>
+    <entry name="media_encryption">none</entry>
     <entry name="media_encryption_mandatory" overwrite="true">0</entry>
   </section>
   <section name="ui">

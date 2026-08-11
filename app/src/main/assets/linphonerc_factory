@@ -6,7 +6,9 @@
 
 [net]
 mtu=1300
-force_ice_disablement=0
+# کاریا: ICE کاملاً خاموش. مرکز تلفن ICE ندارد و STUN از ایران بسته است؛
+# با ICE روشن، مذاکره‌ی صدا می‌شکست و تماس بی‌صدا می‌ماند.
+force_ice_disablement=1
 
 [rtp]
 accept_any_encryption=1
