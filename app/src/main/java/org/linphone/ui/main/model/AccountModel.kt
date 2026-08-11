@@ -53,6 +53,11 @@ class AccountModel
 
     val identity = account.params.identityAddress?.asStringUriOnly().orEmpty()
 
+    /** شماره‌ی داخلیِ کارمند = نام کاربریِ حساب SIP، با ارقام فارسی. در کشو نشان داده می‌شود. */
+    val extension = (account.params.identityAddress?.username.orEmpty())
+        .map { c -> if (c in '0'..'9') '۰' + (c - '0') else c }
+        .joinToString("")
+
     val displayName = MutableLiveData<String>()
 
     val registrationState = MutableLiveData<RegistrationState>()

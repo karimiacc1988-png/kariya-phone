@@ -62,7 +62,7 @@
         <item quantity="one">%s day</item>
         <item quantity="other">%s days</item>
     </plurals>
-    <string name="search">Search</string>
+    <string name="search">جستجو</string>
 
     <plurals name="selection_count_label">
         <item quantity="one">%s selected</item>
@@ -72,16 +72,16 @@
     <!-- Dialog various possible buttons label -->
     <string name="dialog_deny">Deny</string>
     <string name="dialog_accept">Accept</string>
-    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_cancel">انصراف</string>
     <string name="dialog_continue">Continue</string>
     <string name="dialog_call">Call</string>
-    <string name="dialog_delete">Delete</string>
+    <string name="dialog_delete">حذف</string>
     <string name="dialog_install">Install</string>
     <string name="dialog_do_not_show_anymore">Do not show this dialog anymore</string>
     <string name="dialog_no">No</string>
     <string name="dialog_yes">Yes</string>
     <string name="dialog_remove">Remove</string>
-    <string name="dialog_confirm">Confirm</string>
+    <string name="dialog_confirm">تأیید</string>
     <string name="dialog_understood">Understood</string>
     <string name="dialog_do_not_cancel">Do not cancel</string>
 
@@ -199,25 +199,25 @@
     <string name="assistant_recover_phone_number_account_unavailable_no_push_warning">Push notifications do not seem to be available on your device, but they are mandatory for recovering a phone number account in the mobile app.</string>
 
     <!-- Main navigation items -->
-    <string name="bottom_navigation_contacts_label">Contacts</string>
-    <string name="bottom_navigation_calls_label">Calls</string>
+    <string name="bottom_navigation_contacts_label">مخاطبین</string>
+    <string name="bottom_navigation_calls_label">تماس‌ها</string>
     <string name="bottom_navigation_conversations_label">Conversations</string>
     <string name="bottom_navigation_meetings_label">Meetings</string>
 
     <!-- Side menu -->
-    <string name="drawer_menu_manage_account">Manage the profile</string>
-    <string name="drawer_menu_account_connection_status_connected">Connected</string>
+    <string name="drawer_menu_manage_account">مدیریت حساب</string>
+    <string name="drawer_menu_account_connection_status_connected">متصل</string>
     <string name="drawer_menu_account_connection_status_disconnected">Disconnected</string>
     <string name="drawer_menu_account_connection_status_refreshing">Refreshing</string>
-    <string name="drawer_menu_account_connection_status_cleared">Disabled</string>
+    <string name="drawer_menu_account_connection_status_cleared">قطع</string>
     <string name="drawer_menu_account_connection_status_progress">Connecting…</string>
-    <string name="drawer_menu_account_connection_status_failed">Error</string>
-    <string name="drawer_menu_no_account_configured_yet">No account configured yet</string>
-    <string name="drawer_menu_add_account">Add an account</string>
+    <string name="drawer_menu_account_connection_status_failed">اتصال برقرار نشد</string>
+    <string name="drawer_menu_no_account_configured_yet">هنوز حسابی تنظیم نشده</string>
+    <string name="drawer_menu_add_account">افزودن حساب</string>
 
     <!-- Help & troubleshooting related -->
-    <string name="help_title">Help</string>
-    <string name="help_about_title">About &appName;</string>
+    <string name="help_title">راهنما</string>
+    <string name="help_about_title">درباره‌ی &appName;</string>
     <string name="help_about_user_guide_title">&appName; user guide</string>
     <string name="help_about_user_guide_subtitle">Learn how to master all app features, step by step.</string>
     <string name="help_about_privacy_policy_title">Privacy policy</string>
@@ -231,7 +231,7 @@
     <string name="help_error_checking_version_toast_message">An error occurred while checking for update</string>
     <string name="help_dialog_update_available_title">Update available</string>
     <string name="help_dialog_update_available_message">A new version %s is available. Do you want to update?</string>
-    <string name="help_quit_title">Quit app</string>
+    <string name="help_quit_title">بستن برنامه</string>
     <string name="help_troubleshooting_title">Troubleshooting</string>
     <string name="help_troubleshooting_subtitle">Transmit your diagnostic logs to facilitate bug resolution.</string>
     <string name="help_troubleshooting_print_logs_in_logcat">Print logs in logcat</string>
@@ -246,7 +246,7 @@
     <string name="help_troubleshooting_show_config_file">Show configuration</string>
 
     <!-- App & SDK settings -->
-    <string name="settings_title">Settings</string>
+    <string name="settings_title">تنظیمات</string>
     <string name="settings_security_title">Security</string>
     <string name="settings_security_enable_vfs_title">Encrypt everything</string>
     <string name="settings_security_enable_vfs_subtitle">Warning: once enabled it can\'t be disabled!</string>
@@ -886,7 +886,7 @@
     <string name="conference_locally_hosted_title">Local group call</string>
 
     <!-- Call records -->
-    <string name="recordings_title">Recordings</string>
+    <string name="recordings_title">ضبط‌ها</string>
     <string name="recordings_list_empty">No recording for the moment…</string>
 
     <!-- Android Auto UI texts -->
@@ -1085,4 +1085,7 @@
     <string name="kariya_login_server_error">سرور پاسخ نداد. کمی بعد دوباره امتحان کنید.</string>
     <string name="kariya_login_no_network">اتصال به اینترنت برقرار نشد.</string>
     <string name="kariya_login_register_failed">ورود انجام شد ولی اتصال به مرکز تلفن برقرار نشد.</string>
+
+    <!-- نمایش داخلی کارمند در کشو -->
+    <string name="kariya_my_extension">داخلی: %1$s</string>
 </resources>
