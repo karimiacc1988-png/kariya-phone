@@ -375,6 +375,36 @@ class MainActivity : GenericActivity() {
             }
         }
 
+        /*
+         * کاربر «هر بار بپرس» را انتخاب کرده: پیش از هر تماس بیرونی می‌پرسیم با
+         * کدام خط برود، بعد همان تماس را با خطِ انتخاب‌شده دوباره شروع می‌کنیم.
+         *
+         * ⚠️ بدون این شنونده، انتخابِ «هر بار بپرس» یعنی تماس‌ها بی‌صدا هیچ‌کاری
+         * نکنند — چون هسته تماس را متوقف می‌کند و منتظر پاسخ صفحه می‌ماند.
+         */
+        coreContext.askOutboundLineEvent.observe(this) {
+            it.consume { address ->
+                val labels = arrayOf(
+                    getString(R.string.kariya_line_services),
+                    getString(R.string.kariya_line_software),
+                    getString(R.string.kariya_line_third)
+                )
+                val values = arrayOf("81", "82", "83")
+                try {
+                    androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle(R.string.kariya_outbound_line_title)
+                        .setItems(labels) { _, which ->
+                            coreContext.postOnCoreThread {
+                                coreContext.startCall(address, lineOverride = values[which])
+                            }
+                        }
+                        .show()
+                } catch (e: WindowManager.BadTokenException) {
+                    Log.e("$TAG Can't ask for outbound line: $e")
+                }
+            }
+        }
+
         coreContext.showGreenToastEvent.observe(this) {
             it.consume { pair ->
                 val message = getString(pair.first)

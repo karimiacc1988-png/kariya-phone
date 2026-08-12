@@ -6,6 +6,9 @@
     <data>
         <import type="android.view.View" />
         <variable
+            name="outboundLineClickedListener"
+            type="View.OnClickListener" />
+        <variable
             name="settingsClickedListener"
             type="View.OnClickListener" />
         <variable
@@ -187,7 +190,31 @@
                 app:layout="@{@layout/drawer_shortcuts_list_cell}"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toTopOf="@id/settings" />
+                app:layout_constraintBottom_toTopOf="@id/outbound_line" />
+
+            <!--
+                خطی که تماس‌های بیرونی با آن می‌روند — یعنی شماره‌ای که روی گوشیِ
+                مشتری می‌افتد. لمس که شود فهرست خط‌ها باز می‌شود.
+            -->
+            <androidx.appcompat.widget.AppCompatTextView
+                android:onClick="@{outboundLineClickedListener}"
+                style="@style/header_style"
+                android:id="@+id/outbound_line"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:padding="5dp"
+                android:drawableStart="@drawable/phone"
+                android:drawableEnd="@drawable/caret_right"
+                android:drawablePadding="8dp"
+                android:background="@drawable/squircle_transparent_button_background"
+                app:drawableTint="?attr/color_main2_500"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/settings"
+                tools:text="خط تماس: خدمات حسابداری" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:onClick="@{settingsClickedListener}"

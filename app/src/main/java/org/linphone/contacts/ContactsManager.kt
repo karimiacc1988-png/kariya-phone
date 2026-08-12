@@ -532,7 +532,14 @@ class ContactsManager
             } else {
                 Log.d("$TAG No matching friend found for SIP URI [$key]...")
                 val fakeFriend = coreContext.core.createFriend()
-                fakeFriend.name = LinphoneUtils.getDisplayName(address)
+                /*
+                 * کسی که در دفترچه نیست ممکن است مشتریِ ثبت‌شده در پنل باشد.
+                 * اسمش را از آن‌جا می‌پرسیم تا به‌جای شماره، نامش روی صفحه بیفتد.
+                 * اگر نبود یا شبکه نبود، همان رفتار قبلی (نمایش شماره) می‌ماند.
+                 */
+                val number = clone.username.orEmpty()
+                fakeFriend.name = KariyaDirectory.lookupName(number)
+                    ?: LinphoneUtils.getDisplayName(address)
                 fakeFriend.address = clone
                 val model = ContactAvatarModel(fakeFriend)
                 unknownContactsAvatarsMap[key] = model

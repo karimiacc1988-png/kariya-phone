@@ -32,7 +32,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.linphone.LinphoneApplication.Companion.coreContext
+import org.linphone.LinphoneApplication.Companion.corePreferences
 import org.linphone.R
 import org.linphone.core.tools.Log
 import org.linphone.databinding.DrawerMenuBinding
@@ -75,6 +77,11 @@ class DrawerMenuFragment : GenericMainFragment() {
         // پس این تنها جای همیشگی است که می‌شود دید روی گوشی کدام بیلد نشسته.
         binding.brandVersion.text = org.linphone.BuildConfig.VERSION_NAME
         observeToastEvents(viewModel)
+
+        showOutboundLine()
+        binding.setOutboundLineClickedListener {
+            pickOutboundLine()
+        }
 
         binding.setSettingsClickedListener {
             val navController = (requireActivity() as MainActivity).findNavController()
@@ -184,6 +191,67 @@ class DrawerMenuFragment : GenericMainFragment() {
                 coreContext.postOnCoreThread {
                     viewModel.checkIfKeepAliveServiceIsEnabled()
                 }
+            }
+        }
+    }
+
+    // ---------------------------------------------- خط تماس بیرونی کاریا
+
+    /**
+     * خط‌های شرکت. پیش‌شماره چیزی است که مرکز تلفن با آن می‌فهمد کدام شماره
+     * روی گوشیِ مشتری بیفتد؛ کاربر هرگز نمی‌بیندش.
+     */
+    private val kariyaLines by lazy {
+        listOf(
+            "81" to getString(R.string.kariya_line_services),
+            "82" to getString(R.string.kariya_line_software),
+            "83" to getString(R.string.kariya_line_third),
+            "ask" to getString(R.string.kariya_line_ask)
+        )
+    }
+
+    private fun outboundLineLabel(value: String): String {
+        return kariyaLines.firstOrNull { it.first == value }?.second
+            ?: kariyaLines.first().second
+    }
+
+    private fun showOutboundLine() {
+        coreContext.postOnCoreThread {
+            val current = corePreferences.outboundLine.ifEmpty { kariyaLines.first().first }
+            val label = outboundLineLabel(current)
+            coreContext.postOnMainThread {
+                if (::binding.isInitialized) {
+                    binding.outboundLine.text = getString(R.string.kariya_outbound_line, label)
+                }
+            }
+        }
+    }
+
+    /**
+     * فهرست خط‌ها را باز می‌کند و انتخاب را ذخیره می‌کند.
+     *
+     * ⚠️ انتخاب در تنظیمات هسته می‌نشیند، نه در حافظه‌ی صفحه: تماس ممکن است از
+     * تاریخچه یا مخاطبین شروع شود که این صفحه اصلا باز نیست.
+     */
+    private fun pickOutboundLine() {
+        coreContext.postOnCoreThread {
+            val current = corePreferences.outboundLine.ifEmpty { kariyaLines.first().first }
+            val selected = kariyaLines.indexOfFirst { it.first == current }.coerceAtLeast(0)
+            val labels = kariyaLines.map { it.second }.toTypedArray()
+
+            coreContext.postOnMainThread {
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.kariya_outbound_line_title)
+                    .setSingleChoiceItems(labels, selected) { dialog, which ->
+                        val value = kariyaLines[which].first
+                        coreContext.postOnCoreThread {
+                            corePreferences.outboundLine = value
+                            Log.i("$TAG Outbound line set to [$value]")
+                        }
+                        showOutboundLine()
+                        dialog.dismiss()
+                    }
+                    .show()
             }
         }
     }
