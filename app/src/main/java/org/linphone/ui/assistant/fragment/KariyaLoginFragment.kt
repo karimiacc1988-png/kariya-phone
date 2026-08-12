@@ -63,6 +63,10 @@ class KariyaLoginFragment : GenericFragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.lifecycleOwner = viewLifecycleOwner
 
+        // نسخه عمداً با ارقام لاتین می‌ماند تا دقیقاً همان چیزی باشد که در
+        // نام فایل و در گیت‌هاب نوشته شده و بشود مو‌به‌مو تطبیقش داد.
+        binding.version.text = org.linphone.BuildConfig.VERSION_NAME
+
         binding.sendCode.setOnClickListener { requestCode("bale") }
         binding.sendCodeSms.setOnClickListener { requestCode("sms") }
         binding.verifyCode.setOnClickListener { verifyCode() }

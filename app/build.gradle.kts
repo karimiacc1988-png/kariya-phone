@@ -107,7 +107,16 @@ android {
         minSdk = 28
         targetSdk = 37
         versionCode = 602005 // 6.02.005
-        versionName = "6.2.5"
+
+        /*
+         * نسخه‌ی کاریا فون. شماره‌ی بیلد را خودِ گیت‌هاب اکشنز می‌دهد
+         * (`-PkariyaBuild=<شماره اجرا>`) و روی صفحه‌ی ورود نوشته می‌شود.
+         *
+         * ⚠️ بدون این، هیچ راهی نبود بفهمیم روی گوشی کدام نسخه نصب است — یک بار
+         * نسخه‌ی قدیمی نصب شد و ساعت‌ها دنبال ایرادی گشتیم که از قبل حل شده بود.
+         */
+        val kariyaBuild = (project.findProperty("kariyaBuild") as String?) ?: "0"
+        versionName = "kariya-1.02.$kariyaBuild"
 
         manifestPlaceholders["appAuthRedirectScheme"] = packageName
 
@@ -125,7 +134,9 @@ android {
         variant.outputs
             .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach { output ->
-                output.outputFileName = "kariya-phone-${variant.buildType.name}-$gitVersion.apk"
+                // نام فایل همان نسخه‌ای است که داخل اپ نوشته می‌شود، تا وقتی چند
+                // فایل کنار هم در پوشه‌ی دانلود نشستند معلوم باشد کدام کدام است.
+                output.outputFileName = "${variant.versionName}.apk"
             }
     }
 

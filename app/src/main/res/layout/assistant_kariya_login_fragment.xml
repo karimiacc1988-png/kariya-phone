@@ -7,6 +7,7 @@
   سرور آن‌ها را می‌دهد و اپ خودش حساب را می‌سازد.
 -->
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ScrollView
@@ -171,6 +172,21 @@
                 android:textColor="@color/red_danger_500"
                 android:textSize="13sp"
                 android:visibility="gone" />
+
+            <!--
+                شماره‌ی نسخه. کوچک و کم‌رنگ، ولی همیشه دمِ دست: بدون آن معلوم
+                نبود روی گوشی کدام بیلد نصب است.
+            -->
+            <TextView
+                android:id="@+id/version"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:layout_marginBottom="8dp"
+                android:gravity="center"
+                android:textColor="@color/gray_main2_400"
+                android:textSize="12sp"
+                tools:text="نسخه ۱.۰ (۴۲)" />
         </LinearLayout>
     </ScrollView>
 </layout>

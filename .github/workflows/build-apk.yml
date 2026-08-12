@@ -50,7 +50,9 @@ jobs:
           chmod +x ./gradlew
 
       - name: ساخت نسخه نهایی
-        run: ./gradlew :app:assembleRelease --stacktrace --no-daemon
+        # شماره‌ی اجرا داخل اپ نوشته می‌شود تا همیشه معلوم باشد روی گوشی کدام
+        # بیلد نصب است.
+        run: ./gradlew :app:assembleRelease -PkariyaBuild=${{ github.run_number }} --stacktrace --no-daemon
 
       - name: پاک‌کردن کلید از ماشین ساخت
         if: always()

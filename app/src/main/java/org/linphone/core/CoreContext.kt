@@ -1007,7 +1007,29 @@ class CoreContext
         startCall(address, params, forceZRTP, localAddress, skipNetworkReachabilityTest)
     }
 
+    /**
+     * پیش‌شماره‌ی خطِ انتخابی را جلوی شماره می‌گذارد تا مرکز تلفن بداند کدام
+     * شماره‌ی شرکت روی گوشی مشتری بیفتد.
+     *
+     * ⚠️ فقط روی تماس‌های بیرونی. داخلی‌ها (سه رقمی، مثل ۱۲۰) نباید پیش‌شماره
+     * بگیرند وگرنه «۸۱۱۲۰» می‌شود و مرکز تلفن آن را نمی‌شناسد.
+     */
     @WorkerThread
+    private fun applyOutboundLine(address: Address): Address {
+        val line = corePreferences.outboundLine
+        if (line.isEmpty() || line == "ask") return address
+
+        val number = address.username.orEmpty()
+        if (number.isEmpty() || !number.isDigitsOnly()) return address
+        if (number.length <= 4) return address           // داخلی، نه شماره‌ی بیرونی
+        if (number.startsWith(line)) return address      // از قبل پیش‌شماره خورده
+
+        val prefixed = address.clone()
+        prefixed.username = line + number
+        Log.i("$TAG Kariya: dialling [$number] on line [$line]")
+        return prefixed
+    }
+
     fun startCall(
         address: Address,
         callParams: CallParams? = null,
@@ -1028,9 +1050,11 @@ class CoreContext
             currentCall.pause()
         }
 
+        val dialed = applyOutboundLine(address)
+
         val params = callParams ?: core.createCallParams(null)
         if (params == null) {
-            val call = core.inviteAddress(address)
+            val call = core.inviteAddress(dialed)
             Log.w("$TAG Starting call $call without params")
             return
         }
@@ -1063,16 +1087,16 @@ class CoreContext
             Log.i("$TAG No local address given, using default account [${defaultAccount?.params?.identityAddress?.asStringUriOnly()}]")
         }
 
-        val username = address.username.orEmpty()
-        val domain = address.domain.orEmpty()
+        val username = dialed.username.orEmpty()
+        val domain = dialed.domain.orEmpty()
         val account = params.account ?: core.defaultAccount
         if (account != null && Compatibility.isIpAddress(domain)) {
-            Log.i("$TAG SIP URI [${address.asStringUriOnly()}] seems to have an IP address as domain")
+            Log.i("$TAG SIP URI [${dialed.asStringUriOnly()}] seems to have an IP address as domain")
             if (username.isNotEmpty() && (username.startsWith("+") || username.isDigitsOnly())) {
                 val identityDomain = account.params.identityAddress?.domain
                 Log.w("$TAG Username [$username] looks like a phone number, replacing domain [$domain] by the local account one [$identityDomain]")
                 if (identityDomain != null) {
-                    val newAddress = address.clone()
+                    val newAddress = dialed.clone()
                     newAddress.domain = identityDomain
 
                     core.inviteAddressWithParams(newAddress, params)
@@ -1082,8 +1106,8 @@ class CoreContext
             }
         }
 
-        core.inviteAddressWithParams(address, params)
-        Log.i("$TAG Starting call to [${address.asStringUriOnly()}]")
+        core.inviteAddressWithParams(dialed, params)
+        Log.i("$TAG Starting call to [${dialed.asStringUriOnly()}]")
     }
 
     @WorkerThread

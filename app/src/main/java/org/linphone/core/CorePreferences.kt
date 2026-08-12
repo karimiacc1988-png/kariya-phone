@@ -117,6 +117,26 @@ class CorePreferences
             config.setString("app", "device", value.trim())
         }
 
+    /**
+     * کدام خط شرکت روی تلفنِ مشتری بیفتد.
+     *
+     * مرکز تلفن خط را از روی پیش‌شماره تشخیص می‌دهد: `81` خدمات حسابداری،
+     * `82` نرم‌افزار حسابداری، `83` خط سوم. کاربر این عددها را نمی‌بیند؛ اپ
+     * پیش از شماره‌گیری خودش می‌چسباند و مرکز تلفن قبل از تماس برش می‌دارد.
+     *
+     * مقدار `ask` یعنی هر بار بپرس، و مقدار خالی یعنی هنوز انتخاب نشده — در هر
+     * دو حالت پیش از تماس از کاربر پرسیده می‌شود.
+     *
+     * ⚠️ عمداً `81` را «پیش‌فرضِ خاموش» نگرفتیم: اگر کسی خط را انتخاب نکرده،
+     * بهتر است یک بار بپرسیم تا اینکه بی‌خبر با خطِ اشتباه زنگ بزند.
+     */
+    @get:AnyThread @set:WorkerThread
+    var outboundLine: String
+        get() = config.getString("app", "kariya_outbound_line", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "kariya_outbound_line", value.trim())
+        }
+
     @get:AnyThread @set:WorkerThread
     var showDeveloperSettings: Boolean
         get() = config.getBool("ui", "show_developer_settings", false)
