@@ -13,7 +13,10 @@
  */
 package org.linphone.contacts
 
+import android.util.Base64
 import androidx.annotation.WorkerThread
+import java.io.File
+import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import org.json.JSONObject
@@ -40,13 +43,20 @@ object KariyaDirectory {
      */
     @WorkerThread
     fun sync() {
+        /*
+         * ⚠️ داخلی از خودِ حسابِ ثبت‌شده خوانده می‌شود، نه از تنظیماتِ ذخیره‌شده.
+         * نسخه‌ی اول به شماره‌ی موبایل تکیه می‌کرد که فقط هنگام ورود نوشته می‌شد،
+         * و نتیجه‌اش این بود که هرکس از قبل وارد شده بود دفترچه‌اش هرگز نمی‌آمد.
+         */
+        val account = coreContext.core.defaultAccount
+        val myExtension = account?.params?.identityAddress?.username.orEmpty()
         val mobile = corePreferences.kariyaMobile
-        if (mobile.isEmpty()) {
-            Log.i("$TAG No stored mobile yet, skipping colleague sync")
+        if (myExtension.isEmpty() && mobile.isEmpty()) {
+            Log.i("$TAG No account yet, skipping colleague sync")
             return
         }
 
-        val payload = fetch(mobile) ?: return
+        val payload = fetch(mobile, myExtension) ?: return
         val colleagues = payload.optJSONArray("colleagues") ?: return
         val domain = payload.optString("domain")
         if (domain.isEmpty()) {
@@ -55,7 +65,6 @@ object KariyaDirectory {
         }
 
         val core = coreContext.core
-        val myExtension = corePreferences.kariyaExtension
 
         val friends = arrayListOf<Friend>()
         for (index in 0 until colleagues.length()) {
@@ -69,6 +78,7 @@ object KariyaDirectory {
             friend.name = name
             friend.addAddress(address)
             friend.isSubscribesEnabled = false                 // حضور و غیاب لازم نداریم
+            savePhoto(item.optString("avatar"), ext)?.let { friend.photo = it }
             friends.add(friend)
         }
 
@@ -97,8 +107,34 @@ object KariyaDirectory {
         coreContext.contactsManager.notifyContactsListChanged()
     }
 
+    /**
+     * عکس همکار را از پاسخِ سرور روی دیسک می‌نویسد و نشانی فایل را برمی‌گرداند.
+     *
+     * ⚠️ عکس به‌صورت `data:image/…;base64,…` همراه فهرست می‌آید و نه با نشانی،
+     * چون مسیر تصویرهای پنل نشستِ کاربر می‌خواهد و اپ نشست ندارد.
+     */
     @WorkerThread
-    private fun fetch(mobile: String): JSONObject? {
+    private fun savePhoto(dataUrl: String, ext: String): String? {
+        if (dataUrl.isEmpty() || !dataUrl.startsWith("data:")) return null
+        return try {
+            val comma = dataUrl.indexOf(',')
+            if (comma < 0) return null
+            val bytes = Base64.decode(dataUrl.substring(comma + 1), Base64.DEFAULT)
+            if (bytes.isEmpty()) return null
+
+            val folder = File(coreContext.context.filesDir, "kariya-avatars")
+            if (!folder.exists()) folder.mkdirs()
+            val file = File(folder, "$ext.jpg")
+            FileOutputStream(file).use { it.write(bytes) }
+            file.absolutePath
+        } catch (error: Exception) {
+            Log.e("$TAG Could not store photo for [$ext]: $error")
+            null
+        }
+    }
+
+    @WorkerThread
+    private fun fetch(mobile: String, ext: String): JSONObject? {
         return try {
             val connection = URL("$BASE_URL/api/tool/phone/directory").openConnection()
                 as HttpURLConnection
@@ -108,7 +144,8 @@ object KariyaDirectory {
             connection.doOutput = true
             connection.setRequestProperty("Content-Type", "application/json")
             connection.outputStream.use {
-                it.write(JSONObject().put("mobile", mobile).toString().toByteArray())
+                val body = JSONObject().put("mobile", mobile).put("ext", ext)
+                it.write(body.toString().toByteArray())
             }
             val code = connection.responseCode
             val body = (if (code in 200..299) connection.inputStream else connection.errorStream)

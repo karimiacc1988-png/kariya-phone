@@ -61,6 +61,7 @@ import org.linphone.LinphoneApplication.Companion.corePreferences
 import org.linphone.R
 import org.linphone.compatibility.Compatibility
 import org.linphone.core.tools.Log
+import org.linphone.mediastream.Version
 import org.linphone.databinding.MainActivityBinding
 import org.linphone.ui.GenericActivity
 import org.linphone.ui.assistant.AssistantActivity
@@ -112,6 +113,46 @@ class MainActivity : GenericActivity() {
             navigatedToDefaultFragment = true
             controller.removeOnDestinationChangedListener(this)
         }
+    }
+
+    /**
+     * دسترسی‌های لازم برای کار کردنِ تلفن، یک‌جا و در همان شروع.
+     *
+     * ⚠️ نسخه‌ی لینفون هرکدام را در لحظه‌ی نیاز می‌پرسید: میکروفون وسط اولین
+     * تماس، مخاطبین وقتی کاربر وارد فهرست می‌شد. نتیجه‌اش این بود که کارمند وسط
+     * یک تماس واقعی با پنجره‌ی مجوز روبه‌رو می‌شد و تماس خراب می‌شد. یک‌بار
+     * پرسیدن در شروع، هم مؤدبانه‌تر است هم مطمئن‌تر.
+     *
+     * 🔺 «بلندگو» مجوز جدا ندارد؛ همان دسترسی صداست که با میکروفون می‌آید.
+     */
+    private val startupPermissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        for ((permission, granted) in results) {
+            Log.i("$TAG Startup permission [$permission] granted [$granted]")
+        }
+        viewModel.updateMissingPermissionAlert()
+    }
+
+    @UiThread
+    private fun askStartupPermissions() {
+        val wanted = mutableListOf(
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_CONTACTS
+        )
+        if (Version.sdkAboveOrEqual(Version.API33_ANDROID_13_TIRAMISU)) {
+            wanted.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        val missing = wanted.filter {
+            ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (missing.isEmpty()) {
+            Log.i("$TAG All startup permissions already granted")
+            return
+        }
+        Log.i("$TAG Asking for [${missing.size}] startup permission(s)")
+        startupPermissionsLauncher.launch(missing.toTypedArray())
     }
 
     private val postNotificationsPermissionLauncher = registerForActivityResult(
@@ -409,6 +450,9 @@ class MainActivity : GenericActivity() {
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
+
+        // یک بار در شروع، نه وسط اولین تماس.
+        askStartupPermissions()
 
         goToLatestVisitedFragment()
 
