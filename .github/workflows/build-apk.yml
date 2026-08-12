@@ -75,10 +75,18 @@ jobs:
       # می‌نشاند) و اگر ارسال نیمه‌کاره بماند، نسخه‌ی زنده دست‌نخورده می‌ماند.
       - name: انتشار روی CDN
         if: success()
-        # ⚠️ لینک SSH سرور گاهی چند دقیقه‌ای قطع می‌شود. بدون این دو مهلت، مرحله
-        # ساعت‌ها منتظر می‌ماند و بیلد را گروگان می‌گیرد؛ APK از قبل به‌عنوان
+        # ⚠️ این مرحله دو بار پشت سر هم شکست خورد و علتش را پیدا کردیم: لینک SSH
+        # این سرور وسط ارسال می‌افتد و ۵۶ مگابایت هیچ‌وقت یک‌نفس رد نمی‌شود.
+        # تلاش دوباره هم کمکی نمی‌کرد چون هر تلاش از صفر شروع می‌شد.
+        #
+        # حالا فایل تکه‌تکه می‌رود؛ هر تکه اتصال خودش را دارد، پس افتادن لینک
+        # فقط همان تکه را می‌سوزاند نه کل کار را. سمت سرور
+        # `/usr/local/bin/kariya-apk-receive` تکه‌ها را نگه می‌دارد و در پایان
+        # می‌چسباند و چکسام را می‌سنجد.
+        #
+        # مهلت و continue-on-error سر جایشان می‌مانند: APK از قبل به‌عنوان
         # artifact ذخیره شده، پس شکست این مرحله چیزی را از دست نمی‌دهد.
-        timeout-minutes: 8
+        timeout-minutes: 12
         continue-on-error: true
         env:
           DEPLOY_KEY: ${{ secrets.APK_DEPLOY_KEY }}
@@ -88,19 +96,41 @@ jobs:
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/apk_deploy
           chmod 600 ~/.ssh/apk_deploy
           ssh-keyscan -p 23 -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
           APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          SUM=$(sha256sum "$APK" | cut -d' ' -f1)
           echo "فرستادن $(basename "$APK") ($(stat -c%s "$APK") بایت)"
-          for try in 1 2 3; do
-            echo "تلاش $try"
-            if ssh -i ~/.ssh/apk_deploy -p 23 -o BatchMode=yes \
-                   -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
-                   "kariya-apk@$DEPLOY_HOST" < "$APK"; then
-              echo "منتشر شد"; break
-            fi
-            echo "تلاش $try ناموفق بود"
-            [ "$try" = 3 ] && echo "::warning::انتشار روی CDN نشد؛ APK در artifact هست"
-            sleep 20
+
+          rm -rf parts && mkdir parts
+          split -b 4194304 -d -a 3 "$APK" parts/p
+          COUNT=$(ls parts | wc -l)
+          echo "$COUNT تکه‌ی چهار مگابایتی"
+
+          send() {
+            ssh -i ~/.ssh/apk_deploy -p 23 -o BatchMode=yes \
+                -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+                "kariya-apk@$DEPLOY_HOST" "$1"
+          }
+
+          FAILED=0
+          INDEX=0
+          for part in parts/p*; do
+            for try in 1 2 3 4; do
+              if send "part $INDEX" < "$part"; then break; fi
+              if [ "$try" = 4 ]; then
+                echo "::warning::تکه $INDEX بعد از ۴ تلاش نرفت"
+                FAILED=1
+              fi
+              sleep 5
+            done
+            INDEX=$((INDEX + 1))
           done
+
+          if [ "$FAILED" = 0 ] && send "assemble $COUNT $SUM" < /dev/null; then
+            echo "منتشر شد"
+          else
+            echo "::warning::انتشار روی CDN نشد؛ APK در artifact هست"
+          fi
           rm -f ~/.ssh/apk_deploy
 
       - name: بارگذاری گزارش خطا
