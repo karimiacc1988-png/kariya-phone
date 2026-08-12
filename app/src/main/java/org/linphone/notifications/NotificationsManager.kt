@@ -69,7 +69,6 @@ import org.linphone.core.CoreKeepAliveThirdPartyAccountsService
 import org.linphone.core.CoreListenerStub
 import org.linphone.core.Factory
 import org.linphone.core.Friend
-import org.linphone.core.MediaDirection
 import org.linphone.core.RegistrationState
 import org.linphone.core.tools.Log
 import org.linphone.ui.call.CallActivity
@@ -930,22 +929,12 @@ class NotificationsManager
                     "$TAG RECORD_AUDIO permission has been granted, adding MICROPHONE to foreground Service types mask"
                 )
             }
-            val isSendingVideo = when (call.currentParams.videoDirection) {
-                MediaDirection.SendRecv, MediaDirection.SendOnly -> true
-                else -> false
-            }
-            if (call.currentParams.isVideoEnabled && isSendingVideo) {
-                if (ActivityCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.CAMERA
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
-                    mask = mask or Compatibility.FOREGROUND_SERVICE_TYPE_CAMERA
-                    Log.i(
-                        "$TAG CAMERA permission has been granted, adding CAMERA to foreground Service types mask"
-                    )
-                }
-            }
+            /* کاریا: «دوربین» از این ماسک برداشته شد.
+             *
+             * ⚠️ نگه‌داشتنش فقط بی‌فایده نبود، خطرناک بود: مجوز دوربین دیگر در
+             * مانیفست نیست و سرویسِ تماس هم فقط `phoneCall|microphone` را اعلام
+             * می‌کند. اگر روزی این بیت به ماسک اضافه می‌شد، اندروید ۱۴ به بالا
+             * موقع شروع سرویس استثنا می‌داد و تماس اصلاً بالا نمی‌آمد. */
         }
 
         if (Compatibility.isPostNotificationsPermissionGranted(context)) {

@@ -5,8 +5,18 @@
     <!--
         کاریا: تماس تصویری برداشته شد. مرکز تلفن دفتر فقط صداست و ویدیو روی آن
         تعریف نشده؛ نگه‌داشتنِ مجوز دوربین فقط کارمند را موقع نصب نگران می‌کرد.
-        `CAMERA` و `FOREGROUND_SERVICE_CAMERA` و uses-feature دوربین حذف شدند.
+
+        ⚠️ برداشتن این سطرها از همین فایل کافی نبود: خودِ کتابخانه‌ی لینفون
+        دوربین را در مانیفستِ خودش می‌خواهد و ادغام‌کننده‌ی مانیفست دوباره
+        اضافه‌اش می‌کرد — در نتیجه در «اطلاعات برنامه»ی اندروید کنار مجوزها
+        «دوربین» دیده می‌شد. `tools:node="remove"` صریحاً جلوی آن را می‌گیرد.
     -->
+    <uses-permission android:name="android.permission.CAMERA" tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_CAMERA"
+        tools:node="remove" />
+    <uses-feature android:name="android.hardware.camera" tools:node="remove" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
