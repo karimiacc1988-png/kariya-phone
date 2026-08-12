@@ -37,6 +37,23 @@ object KariyaDirectory {
     /** مهلت کوتاه‌تر برای استعلام نام: روی مسیر نمایش تماس است و نباید معطل کند. */
     private const val LOOKUP_TIMEOUT_MS = 6_000
 
+    /**
+     * کیفیت شبکه به درصد سنجیده می‌شود، نه میلی‌ثانیه — چون تصمیمِ «الان تماس
+     * اینترنتی بگیرم یا آفلاین» با یک عدد ساده روشن‌تر است.
+     *
+     * ۱۵۰ میلی‌ثانیه یا کمتر → ۱۰۰٪ (عالی)
+     * ۱۰۰۰ میلی‌ثانیه یا بیشتر → ۰٪ (غیرقابل استفاده)
+     * بینشان خطی.
+     */
+    private const val PING_BEST_MS = 150
+    private const val PING_WORST_MS = 1_000
+
+    /** زیر این درصد، تماس اینترنتی می‌بُرد و بهتر است آفلاین گرفته شود. */
+    private const val MIN_QUALITY_PERCENT = 30
+
+    /** نتیجه‌ی سنجش این‌قدر معتبر می‌ماند، تا هر نگاه به صفحه یک درخواست نزند. */
+    private const val NETWORK_CHECK_TTL_MS = 30_000L
+
     /** نام فهرست، تا هر بار همان را به‌روز کنیم و فهرست تکراری نسازیم. */
     private const val LIST_NAME = "kariya-colleagues"
 
@@ -74,7 +91,12 @@ object KariyaDirectory {
         var boundary = calendar.timeInMillis
         if (boundary > now) boundary -= 24L * 60 * 60 * 1000
 
-        if (last in (boundary + 1)..now) {
+        // اگر فهرست همکاران خالی است، بی‌توجه به زمان همگام کن — وگرنه کاربری
+        // که همگام‌سازی‌اش یک بار (به هر دلیل) ناموفق بود، تا فردا صبح بی‌مخاطب
+        // می‌ماند.
+        val listEmpty = (coreContext.core.getFriendListByName(LIST_NAME)?.friends?.size ?: 0) == 0
+
+        if (!listEmpty && last in (boundary + 1)..now) {
             Log.i("$TAG Colleagues already synced after the 03:00 mark, skipping")
             return
         }
@@ -144,22 +166,24 @@ object KariyaDirectory {
             return
         }
 
-        val list = core.getFriendListByName(LIST_NAME) ?: core.createFriendList()
-        if (list.displayName.isNullOrEmpty()) {
-            list.isDatabaseStorageEnabled = true
-            list.type = FriendList.Type.Default
-            list.displayName = LIST_NAME
-            core.addFriendList(list)
-            for (friend in friends) {
-                list.addLocalFriend(friend)
-            }
-            Log.i("$TAG Created colleagues list with [${friends.size}] entries")
-        } else {
-            // همگام‌سازی به‌جای پاک‌کردن و ساختن: داخلی حذف‌شده می‌رود، تازه
-            // می‌آید، و بقیه دست‌نخورده می‌مانند.
-            list.synchronizeFriendsWith(friends.toTypedArray())
-            Log.i("$TAG Synchronised colleagues list to [${friends.size}] entries")
+        /*
+         * ⚠️ فهرست هر بار از نو ساخته می‌شود. نسخه‌ی اول با `synchronizeFriendsWith`
+         * به‌روزرسانی می‌کرد، ولی آن تابع مخاطبِ موجود را عوض نمی‌کرد — و چون
+         * نسخه‌های قبلی این اپ فهرست را بدون عکس ساخته بودند، عکس‌ها هرگز
+         * نمی‌نشستند. فقط ۱۲ نفرند؛ ساختنِ دوباره ارزان است و خیالمان راحت.
+         */
+        core.getFriendListByName(LIST_NAME)?.let { old ->
+            core.removeFriendList(old)
         }
+        val list = core.createFriendList()
+        list.isDatabaseStorageEnabled = true
+        list.type = FriendList.Type.Default
+        list.displayName = LIST_NAME
+        core.addFriendList(list)
+        for (friend in friends) {
+            list.addLocalFriend(friend)
+        }
+        Log.i("$TAG Rebuilt colleagues list with [${friends.size}] entries")
 
         coreContext.contactsManager.notifyContactsListChanged()
     }
@@ -207,6 +231,57 @@ object KariyaDirectory {
             return
         }
     }
+
+    /** آخرین سنجشِ کیفیت شبکه: زمانِ سنجش و اینکه خوب بود یا نه. */
+    private var lastNetworkCheckAt = 0L
+    private var lastQualityPercent = 100
+
+    /**
+     * آیا اینترنت برای تماسِ صوتی به‌درد می‌خورد؟
+     *
+     * یک درخواستِ کوچک به سرور می‌زند و رفت‌وبرگشتش را می‌سنجد. اگر بیشتر از
+     * [MAX_PING_MS] طول بکشد یا اصلا نرسد، «ضعیف» است.
+     *
+     * ⚠️ نتیجه ۳۰ ثانیه معتبر می‌ماند. بدون آن، هر بار که کاربر به صفحه‌ی
+     * شماره‌گیری نگاه می‌کرد یک درخواست می‌رفت.
+     *
+     * ⚠️ عمداً سخت‌گیر نیست: تماسِ اینترنتی را قطع نمی‌کند، فقط به کاربر
+     * می‌گوید «الان آفلاین بهتر است». تصمیمِ آخر با خودِ اوست — چیزی که خودکار
+     * جلوی تماس را بگیرد، روزی که تشخیص اشتباه بزند کار را می‌خواباند.
+     */
+    @WorkerThread
+    fun networkQualityPercent(): Int {
+        val now = System.currentTimeMillis()
+        if (now - lastNetworkCheckAt < NETWORK_CHECK_TTL_MS) return lastQualityPercent
+
+        lastNetworkCheckAt = now
+        lastQualityPercent = try {
+            val started = System.currentTimeMillis()
+            val connection = URL("$BASE_URL/api/health").openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = PING_WORST_MS
+            connection.readTimeout = PING_WORST_MS
+            connection.responseCode
+            connection.disconnect()
+
+            val elapsed = (System.currentTimeMillis() - started).toInt()
+            val percent = when {
+                elapsed <= PING_BEST_MS -> 100
+                elapsed >= PING_WORST_MS -> 0
+                else -> 100 - ((elapsed - PING_BEST_MS) * 100) / (PING_WORST_MS - PING_BEST_MS)
+            }
+            Log.i("$TAG Network probe [$elapsed] ms → quality [$percent]%")
+            percent
+        } catch (error: Exception) {
+            Log.w("$TAG Network probe failed: $error")
+            0
+        }
+        return lastQualityPercent
+    }
+
+    /** آیا اینترنت برای تماس صوتی به‌درد می‌خورد؟ */
+    @WorkerThread
+    fun isNetworkGoodForVoice(): Boolean = networkQualityPercent() >= MIN_QUALITY_PERCENT
 
     /**
      * «تماس آفلاین» — از مرکز تلفن می‌خواهد تماس را برقرار کند.

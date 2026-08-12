@@ -130,6 +130,18 @@ class StartCallViewModel
                 if (suggestion.isNotEmpty()) {
                     Log.i("$TAG Using numpad dial button to call [$suggestion]")
                     coreContext.postOnCoreThread { core ->
+                        /*
+                         * اگر اینترنت برای صدا ضعیف است، به‌جای تماسی که وسطش
+                         * می‌برد، به کاربر می‌گوییم «آفلاین بگیر». جلویش را
+                         * نمی‌گیریم — تصمیم با خودش است — ولی بی‌خبر هم نمی‌ماند.
+                         */
+                        if (!org.linphone.contacts.KariyaDirectory.isNetworkGoodForVoice()) {
+                            coreContext.postOnMainThread {
+                                showRedToastEvent.value = Event(
+                                    Pair(R.string.kariya_network_weak, R.drawable.warning_circle)
+                                )
+                            }
+                        }
                         val address = core.interpretUrl(
                             suggestion,
                             LinphoneUtils.applyInternationalPrefix()

@@ -37,6 +37,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.linphone.LinphoneApplication.Companion.coreContext
 import org.linphone.LinphoneApplication.Companion.corePreferences
 import org.linphone.R
 import org.linphone.compatibility.Compatibility
@@ -96,6 +97,37 @@ open class GenericActivity : AppCompatActivity() {
         }
 
         super.onCreate(savedInstanceState)
+
+        /*
+         * «هر بار بپرس»: پیش از هر تماس بیرونی می‌پرسیم با کدام خط شرکت برود.
+         *
+         * ⚠️ عمداً این‌جاست و نه در صفحه‌ی اصلی. تماس ممکن است از مخاطبین،
+         * تاریخچه یا حتی صفحه‌ی تماس شروع شود؛ نسخه‌ی اول شنونده را فقط در
+         * صفحه‌ی اصلی گذاشته بود و نتیجه‌اش این بود که «هر بار بپرس» در عمل
+         * هیچ‌وقت نمی‌پرسید. این‌جا پایه‌ی همه‌ی صفحه‌هاست.
+         */
+        coreContext.askOutboundLineEvent.observe(this) {
+            it.consume { address ->
+                val labels = arrayOf(
+                    getString(R.string.kariya_line_services),
+                    getString(R.string.kariya_line_software),
+                    getString(R.string.kariya_line_third)
+                )
+                val values = arrayOf("81", "82", "83")
+                try {
+                    androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle(R.string.kariya_outbound_line_title)
+                        .setItems(labels) { _, which ->
+                            coreContext.postOnCoreThread {
+                                coreContext.startCall(address, lineOverride = values[which])
+                            }
+                        }
+                        .show()
+                } catch (e: Exception) {
+                    Log.e("$TAG Can't ask for the outbound line: $e")
+                }
+            }
+        }
     }
 
     protected fun checkMainColorTheme() {

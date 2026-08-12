@@ -54,6 +54,9 @@ store_friends=0
 
 [app]
 record_aware=1
+# کاریا: همه‌ی مخاطبین گوشی خوانده شوند، نه فقط دفترچه‌ی پیش‌فرض.
+# با مقدار پیش‌فرض (۱)، مخاطبینِ گوگل و سیم‌کارت دیده نمی‌شدند.
+fetch_contacts_from_default_directory=0
 
 [lime]
 lime_update_threshold=86400
