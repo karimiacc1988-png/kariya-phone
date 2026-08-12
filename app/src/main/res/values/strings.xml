@@ -1073,7 +1073,8 @@
     <string name="kariya_login_subtitle">برای ورود، شماره موبایلی که در کاریا حساب ثبت شده را وارد کنید.</string>
     <string name="kariya_login_mobile_label">شماره موبایل</string>
     <string name="kariya_login_mobile_hint">09121234567</string>
-    <string name="kariya_login_send_code">دریافت کد</string>
+    <string name="kariya_login_send_code_bale">دریافت کد با بله</string>
+    <string name="kariya_login_send_code_sms">دریافت کد با پیامک</string>
     <string name="kariya_login_code_hint">کد را وارد کنید</string>
     <string name="kariya_login_verify">ورود</string>
     <string name="kariya_login_change_mobile">شماره را عوض می‌کنم</string>

@@ -15,6 +15,9 @@
     <color name="orange_main_500">#124497</color>
     <!-- پس‌زمینه آیکون جداست چون لوگو آبی است و روی آبی دیده نمی‌شود -->
     <color name="kariya_icon_bg">#FFFFFF</color>
+    <!-- سطحِ پایینِ صفحه‌ی تماس. خاکستریِ سردِ قبلی (#2E3030) کنار آبیِ کاریا
+         وصله می‌زد؛ این سرمه‌ای از همان خانواده‌ی #124497 است. -->
+    <color name="kariya_call_surface">#12203A</color>
 
     <color name="gray_main2_100">#EEF6F8</color>
     <color name="gray_main2_200">#DFECF2</color>

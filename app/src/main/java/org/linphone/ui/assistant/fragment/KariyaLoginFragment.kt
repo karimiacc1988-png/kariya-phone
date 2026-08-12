@@ -63,7 +63,8 @@ class KariyaLoginFragment : GenericFragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.lifecycleOwner = viewLifecycleOwner
 
-        binding.sendCode.setOnClickListener { requestCode() }
+        binding.sendCode.setOnClickListener { requestCode("bale") }
+        binding.sendCodeSms.setOnClickListener { requestCode("sms") }
         binding.verifyCode.setOnClickListener { verifyCode() }
         binding.changeMobile.setOnClickListener { backToMobileStep() }
 
@@ -86,7 +87,8 @@ class KariyaLoginFragment : GenericFragment() {
 
     // ---------------------------------------------------------------- پله یک
 
-    private fun requestCode() {
+    /** [channel] همان چیزی است که کاربر با دکمه انتخاب کرده: `bale` یا `sms`. */
+    private fun requestCode(channel: String) {
         val mobile = digits(binding.mobile.text?.toString().orEmpty())
         if (mobile.length < 10) {
             showError(getString(R.string.kariya_login_bad_mobile))
@@ -95,7 +97,10 @@ class KariyaLoginFragment : GenericFragment() {
 
         busy(true)
         viewLifecycleOwner.lifecycleScope.launch {
-            val result = post("/api/phone/code", JSONObject().put("mobile", mobile))
+            val result = post(
+                "/api/tool/phone/code",
+                JSONObject().put("mobile", mobile).put("channel", channel)
+            )
             busy(false)
             if (result.error != null) {
                 showError(result.error)
@@ -127,7 +132,7 @@ class KariyaLoginFragment : GenericFragment() {
         busy(true)
         viewLifecycleOwner.lifecycleScope.launch {
             val result = post(
-                "/api/phone/login",
+                "/api/tool/phone/login",
                 JSONObject().put("mobile", pendingMobile).put("code", code)
             )
             if (result.error != null) {
@@ -238,6 +243,7 @@ class KariyaLoginFragment : GenericFragment() {
     private fun busy(on: Boolean) {
         binding.progress.visibility = if (on) View.VISIBLE else View.GONE
         binding.sendCode.isEnabled = !on
+        binding.sendCodeSms.isEnabled = !on
         binding.verifyCode.isEnabled = !on
         if (on) hideError()
     }

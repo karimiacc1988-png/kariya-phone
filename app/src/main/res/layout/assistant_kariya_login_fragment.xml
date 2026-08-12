@@ -84,13 +84,26 @@
                     android:textDirection="ltr"
                     android:textSize="18sp" />
 
+                <!--
+                    دو راهِ گرفتن کد، جدا از هم. قبلاً یک دکمه بود و سرور خودش
+                    تصمیم می‌گرفت؛ کسی که بله ندارد نمی‌فهمید چرا کد نیامد.
+                -->
                 <Button
                     android:id="@+id/send_code"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="18dp"
-                    android:text="@string/kariya_login_send_code"
+                    android:text="@string/kariya_login_send_code_bale"
                     android:textSize="16sp" />
+
+                <Button
+                    android:id="@+id/send_code_sms"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/kariya_login_send_code_sms"
+                    android:textSize="15sp" />
             </LinearLayout>
 
             <!-- پله دو: کدی که آمده -->
