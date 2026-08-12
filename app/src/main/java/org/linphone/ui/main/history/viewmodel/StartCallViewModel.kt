@@ -144,6 +144,25 @@ class StartCallViewModel
                     }
                 }
             },
+            { // OnOfflineCallClicked — تماس از راه دفتر
+                val suggestion = searchFilter.value.orEmpty()
+                if (suggestion.isNotEmpty()) {
+                    Log.i("$TAG Requesting office-bridged call to [$suggestion]")
+                    coreContext.postOnCoreThread {
+                        val done = org.linphone.contacts.KariyaDirectory.requestOfflineCall(suggestion)
+                        coreContext.postOnMainThread {
+                            showGreenToastEvent.value = Event(
+                                Pair(
+                                    if (done) R.string.kariya_offline_call_started
+                                    else R.string.kariya_offline_call_failed,
+                                    R.drawable.phone
+                                )
+                            )
+                        }
+                        if (done) leaveFragmentEvent.postValue(Event(true))
+                    }
+                }
+            },
             { // OnBlindTransferClicked
                 val suggestion = searchFilter.value.orEmpty()
                 if (suggestion.isNotEmpty()) {

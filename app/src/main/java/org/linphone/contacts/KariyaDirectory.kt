@@ -209,6 +209,62 @@ object KariyaDirectory {
     }
 
     /**
+     * «تماس آفلاین» — از مرکز تلفن می‌خواهد تماس را برقرار کند.
+     *
+     * سرور اول به موبایلِ خودِ کارمند زنگ می‌زند و بعد او را به مشتری وصل
+     * می‌کند. هیچ‌کدام از دو طرف روی اینترنت نیستند، پس کیفیت صدا به اینترنتِ
+     * گوشی ربطی ندارد — تنها چیزی که اینترنت می‌خواهد همین درخواست است که چند
+     * بایت بیشتر نیست و روی ۲G هم می‌رود.
+     *
+     * ⚠️ فقط درخواست را می‌فرستد و برمی‌گردد؛ خودِ تماس چند لحظه بعد از راه
+     * شبکه‌ی تلفن می‌رسد، نه از اپ.
+     */
+    @WorkerThread
+    fun requestOfflineCall(rawNumber: String): Boolean {
+        val number = normalise(rawNumber)
+        if (number.length < 4) return false
+
+        val myExtension = coreContext.core.defaultAccount
+            ?.params?.identityAddress?.username.orEmpty()
+        if (myExtension.isEmpty()) {
+            Log.e("$TAG No account, cannot request an office-bridged call")
+            return false
+        }
+
+        return try {
+            val connection = URL("$BASE_URL/api/tool/phone/offline-call").openConnection()
+                as HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.connectTimeout = TIMEOUT_MS
+            connection.readTimeout = TIMEOUT_MS
+            connection.doOutput = true
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.outputStream.use {
+                val body = JSONObject()
+                    .put("ext", myExtension)
+                    .put("number", number)
+                    .put("line", corePreferences.outboundLine.takeIf { l -> l != "ask" } ?: "")
+                    .put("name", nameCache[number].orEmpty())
+                it.write(body.toString().toByteArray())
+            }
+            val code = connection.responseCode
+            val text = (if (code in 200..299) connection.inputStream else connection.errorStream)
+                ?.bufferedReader()?.use { it.readText() }.orEmpty()
+            connection.disconnect()
+            if (code !in 200..299) {
+                Log.e("$TAG Office-bridged call refused [$code]: $text")
+                false
+            } else {
+                Log.i("$TAG Office-bridged call to [$number] requested")
+                true
+            }
+        } catch (error: Exception) {
+            Log.e("$TAG Office-bridged call failed: $error")
+            false
+        }
+    }
+
+    /**
      * شماره را به شکلی می‌آورد که پنل با آن کلید می‌زند: `۰۹۱۲…`.
      * `+98`، `0098` و `98` همگی یک نفرند.
      */

@@ -211,6 +211,30 @@
             app:layout_constraintTop_toBottomOf="@id/digit_0"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
+        <!--
+            تماس آفلاین: وقتی اینترنت برای صدا ضعیف است، مرکز تلفن اول به موبایل
+            خودِ کارمند زنگ می‌زند و بعد او را به مشتری وصل می‌کند. هیچ‌کدام از دو
+            طرف روی اینترنت نیستند، پس کیفیت صدا به اینترنت گوشی ربطی ندارد.
+        -->
+        <ImageView
+            android:id="@+id/offline_call"
+            android:onClick="@{() -> model.onOfflineCallClicked()}"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/call_button_size"
+            android:paddingStart="22dp"
+            android:paddingTop="15dp"
+            android:paddingEnd="22dp"
+            android:paddingBottom="15dp"
+            android:src="@drawable/cell_signal_full"
+            android:contentDescription="@string/kariya_offline_call"
+            android:elevation="3dp"
+            android:background="@drawable/kariya_button_filled"
+            android:visibility="@{showCallTransferIcon ? View.GONE : View.VISIBLE}"
+            app:tint="@color/bc_white"
+            app:layout_constraintEnd_toStartOf="@id/call"
+            app:layout_constraintTop_toTopOf="@id/call"
+            app:layout_constraintBottom_toBottomOf="@id/call"/>
+
         <ImageView
             android:id="@+id/transfer"
             android:onClick="@{() -> model.onBlindTransferClicked()}"

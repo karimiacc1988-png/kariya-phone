@@ -38,6 +38,7 @@ open class NumpadModel
     private val onVoicemailClicked: () -> (Unit),
     private val onBackspaceClicked: () -> (Unit),
     private val onCallClicked: () -> (Unit),
+    private val onOfflineCallClicked: () -> (Unit),
     private val onTransferCallClicked: () -> (Unit),
     private val onClearClicked: () -> (Unit)
 ) {
@@ -135,6 +136,16 @@ open class NumpadModel
     fun onCallClicked() {
         Log.i("$TAG Starting call")
         onCallClicked.invoke()
+    }
+
+    /**
+     * تماس آفلاین: مرکز تلفن اول به موبایل خودِ کارمند زنگ می‌زند و بعد او را
+     * به مشتری وصل می‌کند — برای وقتی که اینترنت برای صدا ضعیف است.
+     */
+    @UiThread
+    fun onOfflineCallClicked() {
+        Log.i("$TAG Starting office-bridged (offline) call")
+        onOfflineCallClicked.invoke()
     }
 
     @UiThread

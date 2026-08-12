@@ -1080,6 +1080,9 @@
     <string name="kariya_line_software">نرم‌افزار حسابداری — ۰۲۱۹۱۰۰۴۳۴۵</string>
     <string name="kariya_line_third">خط سوم — ۰۲۱۹۱۰۰۲۶۶۹</string>
     <string name="kariya_line_ask">هر بار بپرس</string>
+    <string name="kariya_offline_call">تماس آفلاین از راه دفتر</string>
+    <string name="kariya_offline_call_started">دفتر تا لحظاتی دیگر با شما تماس می‌گیرد</string>
+    <string name="kariya_offline_call_failed">تماس آفلاین برقرار نشد</string>
     <string name="kariya_login_send_code_sms">دریافت کد با پیامک</string>
     <string name="kariya_login_code_hint">کد را وارد کنید</string>
     <string name="kariya_login_verify">ورود</string>

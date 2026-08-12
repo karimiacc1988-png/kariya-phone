@@ -576,6 +576,8 @@ class CurrentCallViewModel
             },
             { // OnCallClicked
             },
+            { // OnOfflineCallClicked — وسط تماس معنایی ندارد
+            },
             { // OnBlindTransferClicked
             },
             { // OnClearInput
