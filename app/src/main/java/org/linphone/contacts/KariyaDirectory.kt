@@ -15,6 +15,7 @@ package org.linphone.contacts
 
 import android.net.Uri
 import android.util.Base64
+import androidx.annotation.AnyThread
 import androidx.annotation.WorkerThread
 import java.io.File
 import java.io.FileOutputStream
@@ -279,9 +280,26 @@ object KariyaDirectory {
         return lastQualityPercent
     }
 
-    /** آیا اینترنت برای تماس صوتی به‌درد می‌خورد؟ */
+    /** آیا اینترنت برای تماس صوتی به‌درد می‌خورد؟ (ممکن است بسنجد و معطل کند) */
     @WorkerThread
     fun isNetworkGoodForVoice(): Boolean = networkQualityPercent() >= MIN_QUALITY_PERCENT
+
+    /**
+     * نتیجه‌ی آخرین سنجش، بدون هیچ درخواستِ تازه.
+     *
+     * روی مسیرِ تماس از این استفاده می‌شود: سنجیدن در لحظه‌ی تماس یعنی تا یک
+     * ثانیه معطلی، آن هم درست وقتی کاربر عجله دارد.
+     */
+    @AnyThread
+    fun lastKnownNetworkGood(): Boolean = lastQualityPercent >= MIN_QUALITY_PERCENT
+
+    /** سنجش در پس‌زمینه، برای وقتی که صفحه‌ی شماره‌گیری باز می‌شود. */
+    @AnyThread
+    fun probeNetworkInBackground() {
+        coreContext.postOnCoreThread {
+            networkQualityPercent()
+        }
+    }
 
     /**
      * «تماس آفلاین» — از مرکز تلفن می‌خواهد تماس را برقرار کند.
@@ -365,6 +383,25 @@ object KariyaDirectory {
      * ⚠️ روی نخِ هسته صدا زده می‌شود و شبکه را همان‌جا می‌زند؛ برای همین مهلتش
      * کوتاه است. اگر سرور دیر کند، همان شماره نشان داده می‌شود که رفتار قبلی بود.
      */
+    /**
+     * نامِ شماره را فقط از حافظه می‌خواند و اگر نبود، در پس‌زمینه می‌پرسد.
+     *
+     * ⚠️ روی مسیر نمایشِ تماس ورودی از این استفاده می‌شود. نسخه‌ی اول همان‌جا
+     * شبکه را می‌زد و تا شش ثانیه نخِ هسته را نگه می‌داشت — یعنی صفحه‌ی تماس
+     * دیر می‌آمد و در بدترین حالت زنگ هم دیر می‌خورد. حالا بار اول شماره نشان
+     * داده می‌شود و نامش برای دفعه‌های بعد آماده می‌ماند.
+     */
+    @WorkerThread
+    fun cachedNameOrFetch(number: String): String? {
+        val digits = normalise(number)
+        if (digits.length < 10) return null
+        nameCache[digits]?.let { return it.ifEmpty { null } }
+
+        // در پس‌زمینه بپرس، ولی همین حالا معطل نکن
+        coreContext.postOnCoreThread { lookupName(digits) }
+        return null
+    }
+
     @WorkerThread
     fun lookupName(number: String): String? {
         /*

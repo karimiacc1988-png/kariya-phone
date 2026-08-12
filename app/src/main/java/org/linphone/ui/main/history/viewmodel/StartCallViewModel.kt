@@ -102,6 +102,10 @@ class StartCallViewModel
     }
 
     init {
+        // کیفیت شبکه همین حالا سنجیده می‌شود تا وقتی کاربر دکمه‌ی تماس را زد،
+        // جواب آماده باشد و تماس معطل نشود.
+        org.linphone.contacts.KariyaDirectory.probeNetworkInBackground()
+
         isNumpadVisible.value = false
         numpadModel = NumpadModel(
             false,
@@ -131,11 +135,12 @@ class StartCallViewModel
                     Log.i("$TAG Using numpad dial button to call [$suggestion]")
                     coreContext.postOnCoreThread { core ->
                         /*
-                         * اگر اینترنت برای صدا ضعیف است، به‌جای تماسی که وسطش
-                         * می‌برد، به کاربر می‌گوییم «آفلاین بگیر». جلویش را
-                         * نمی‌گیریم — تصمیم با خودش است — ولی بی‌خبر هم نمی‌ماند.
+                         * ⚠️ نتیجه‌ی سنجشِ *قبلی* خوانده می‌شود، نه سنجشِ تازه.
+                         * سنجیدن در همین لحظه یعنی تا یک ثانیه معطلیِ تماس، آن هم
+                         * درست وقتی کاربر عجله دارد. سنجش وقتی صفحه باز می‌شود
+                         * انجام شده و نتیجه‌اش این‌جا آماده است.
                          */
-                        if (!org.linphone.contacts.KariyaDirectory.isNetworkGoodForVoice()) {
+                        if (!org.linphone.contacts.KariyaDirectory.lastKnownNetworkGood()) {
                             coreContext.postOnMainThread {
                                 showRedToastEvent.value = Event(
                                     Pair(R.string.kariya_network_weak, R.drawable.warning_circle)

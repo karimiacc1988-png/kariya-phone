@@ -538,7 +538,7 @@ class ContactsManager
                  * اگر نبود یا شبکه نبود، همان رفتار قبلی (نمایش شماره) می‌ماند.
                  */
                 val number = clone.username.orEmpty()
-                fakeFriend.name = KariyaDirectory.lookupName(number)
+                fakeFriend.name = KariyaDirectory.cachedNameOrFetch(number)
                     ?: LinphoneUtils.getDisplayName(address)
                 fakeFriend.address = clone
                 val model = ContactAvatarModel(fakeFriend)
