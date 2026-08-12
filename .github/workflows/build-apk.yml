@@ -68,6 +68,25 @@ jobs:
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
+      # آپلود از ماشین کار به سرور حدود ده دقیقه طول می‌کشید؛ از این‌جا چند ثانیه
+      # است. کلید روی سرور به یک دستور قفل است (فقط همین فایل را در پوشه‌ی CDN
+      # می‌نشاند) و اگر ارسال نیمه‌کاره بماند، نسخه‌ی زنده دست‌نخورده می‌ماند.
+      - name: انتشار روی CDN
+        if: success()
+        env:
+          DEPLOY_KEY: ${{ secrets.APK_DEPLOY_KEY }}
+          DEPLOY_HOST: ${{ secrets.APK_DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/apk_deploy
+          chmod 600 ~/.ssh/apk_deploy
+          ssh-keyscan -p 23 -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          echo "فرستادن $(basename "$APK") ($(stat -c%s "$APK") بایت)"
+          ssh -i ~/.ssh/apk_deploy -p 23 -o BatchMode=yes \
+              "kariya-apk@$DEPLOY_HOST" < "$APK"
+          rm -f ~/.ssh/apk_deploy
+
       - name: بارگذاری گزارش خطا
         if: failure()
         uses: actions/upload-artifact@v4
