@@ -130,6 +130,25 @@ class CorePreferences
      * ⚠️ عمداً `81` را «پیش‌فرضِ خاموش» نگرفتیم: اگر کسی خط را انتخاب نکرده،
      * بهتر است یک بار بپرسیم تا اینکه بی‌خبر با خطِ اشتباه زنگ بزند.
      */
+    /**
+     * شماره‌ی موبایلی که با آن وارد شده — دفترچه‌ی همکاران با همین از پنل
+     * گرفته می‌شود، چون پنل فهرست را فقط به کسی می‌دهد که خودش داخلی دارد.
+     */
+    @get:AnyThread @set:WorkerThread
+    var kariyaMobile: String
+        get() = config.getString("app", "kariya_mobile", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "kariya_mobile", value.trim())
+        }
+
+    /** داخلی خودِ کاربر، تا در فهرست همکاران خودش را نبیند. */
+    @get:AnyThread @set:WorkerThread
+    var kariyaExtension: String
+        get() = config.getString("app", "kariya_extension", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "kariya_extension", value.trim())
+        }
+
     @get:AnyThread @set:WorkerThread
     var outboundLine: String
         get() = config.getString("app", "kariya_outbound_line", "").orEmpty().trim()

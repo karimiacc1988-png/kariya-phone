@@ -24,6 +24,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import org.linphone.LinphoneApplication.Companion.coreContext
+import org.linphone.LinphoneApplication.Companion.corePreferences
 import org.linphone.R
 import org.linphone.core.tools.Log
 import org.linphone.databinding.AssistantKariyaLoginFragmentBinding
@@ -156,6 +158,13 @@ class KariyaLoginFragment : GenericFragment() {
             }
 
             Log.i("$TAG Server gave extension [$username] on [$domain], registering")
+
+            // برای دفترچه‌ی همکاران لازم است: پنل فهرست را فقط به کسی می‌دهد که
+            // خودش داخلی دارد، و خودِ کاربر نباید در فهرست خودش بیفتد.
+            coreContext.postOnCoreThread {
+                corePreferences.kariyaMobile = pendingMobile
+                corePreferences.kariyaExtension = username
+            }
             viewModel.username.value = username
             viewModel.password.value = password
             viewModel.domain.value = domain

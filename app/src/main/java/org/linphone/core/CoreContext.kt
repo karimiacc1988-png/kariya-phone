@@ -804,6 +804,13 @@ class CoreContext
         notificationsManager.onCoreStarted(core, oldVersion < 600000) // Re-create channels when migrating from a non 6.0 version
         Log.i("$TAG Started contacts, telecom & notifications managers")
 
+        // دفترچه‌ی همکاران هر بار که اپ بالا می‌آید تازه می‌شود، تا داخلی تازه‌ای
+        // که روی مرکز تلفن ساخته شده خودش سرِ جایش بیاید و کسی چیزی وارد نکند.
+        // در نخ جدا، چون یک درخواست شبکه است و نباید شروع اپ را کند کند.
+        postOnCoreThread {
+            org.linphone.contacts.KariyaDirectory.sync()
+        }
+
         if (corePreferences.keepServiceAlive) {
             if (activityMonitor.isInForeground() || corePreferences.autoStart) {
                 Log.i("$TAG Keep alive service is enabled and either app is in foreground or auto start is enabled, starting it")

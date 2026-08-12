@@ -139,10 +139,16 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toStartOf="@id/menu"/>
 
+        <!--
+            چرخ‌دنده‌ی «مدیریت حساب» برداشته شد: کارمند حسابش را خودش نمی‌سازد و
+            نباید بتواند به‌همش بزند. صفحه‌اش هم آدرس و پورت مرکز تلفن را نشان
+            می‌داد. حساب با ورودِ شماره‌موبایل ساخته و نگه‌داری می‌شود.
+        -->
         <ImageView
             style="@style/icon_top_bar_button_style"
             android:onClick="@{() -> model.openMenu()}"
             android:id="@+id/menu"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:contentDescription="@string/drawer_menu_manage_account"

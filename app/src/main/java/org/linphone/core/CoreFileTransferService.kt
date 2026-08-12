@@ -118,7 +118,7 @@ class CoreFileTransferService : FileTransferService() {
             getString(R.string.notification_file_transfer_title)
         )
             .setContentText(getString(R.string.notification_file_transfer_startup_message))
-            .setSmallIcon(R.drawable.linphone_notification)
+            .setSmallIcon(R.drawable.kariya_mark)
             .setAutoCancel(false)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

@@ -77,7 +77,7 @@ class CorePushService : PushService() {
         )
             .setContentTitle(getString(R.string.notification_push_received_title))
             .setContentText(getString(R.string.notification_push_received_message))
-            .setSmallIcon(R.drawable.linphone_notification)
+            .setSmallIcon(R.drawable.kariya_mark)
             .setAutoCancel(false)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
