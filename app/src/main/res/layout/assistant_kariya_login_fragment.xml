@@ -94,17 +94,28 @@
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="18dp"
+                    android:background="@drawable/kariya_button_filled"
+                    android:stateListAnimator="@null"
                     android:text="@string/kariya_login_send_code_bale"
+                    android:textAllCaps="false"
+                    android:textColor="@color/bc_white"
                     android:textSize="16sp" />
 
+                <!--
+                    دکمه‌ی پیامک عمداً کادردار و هم‌اندازه‌ی دکمه‌ی بله است.
+                    نسخه‌ی اول «بدون کادر» بود و در عمل به چشم نمی‌آمد.
+                -->
                 <Button
                     android:id="@+id/send_code_sms"
-                    style="?android:attr/borderlessButtonStyle"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="6dp"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/kariya_button_outlined"
+                    android:stateListAnimator="@null"
                     android:text="@string/kariya_login_send_code_sms"
-                    android:textSize="15sp" />
+                    android:textAllCaps="false"
+                    android:textColor="@color/orange_main_500"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <!-- پله دو: کدی که آمده -->
@@ -141,7 +152,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="18dp"
+                    android:background="@drawable/kariya_button_filled"
+                    android:stateListAnimator="@null"
                     android:text="@string/kariya_login_verify"
+                    android:textAllCaps="false"
+                    android:textColor="@color/bc_white"
                     android:textSize="16sp" />
 
                 <TextView

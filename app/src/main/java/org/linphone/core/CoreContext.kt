@@ -115,6 +115,17 @@ class CoreContext
         MutableLiveData()
     }
 
+    /**
+     * وقتی کاربر «هر بار بپرس» را انتخاب کرده، پیش از برقراری تماس این رویداد
+     * می‌رود بالا تا رابط کاربری بپرسد با کدام خط شرکت زنگ بزند.
+     *
+     * ⚠️ خودِ تماس این‌جا برقرار نمی‌شود؛ صفحه پس از انتخاب دوباره
+     * [startCall] را صدا می‌زند، این بار با خطِ مشخص.
+     */
+    val askOutboundLineEvent: MutableLiveData<Event<Address>> by lazy {
+        MutableLiveData()
+    }
+
     val showGreenToastEvent: MutableLiveData<Event<Pair<Int, Int>>> by lazy {
         MutableLiveData()
     }
@@ -1014,9 +1025,15 @@ class CoreContext
      * ⚠️ فقط روی تماس‌های بیرونی. داخلی‌ها (سه رقمی، مثل ۱۲۰) نباید پیش‌شماره
      * بگیرند وگرنه «۸۱۱۲۰» می‌شود و مرکز تلفن آن را نمی‌شناسد.
      */
+    /** آیا این شماره اصلا خط بیرونی می‌خواهد؟ داخلی‌ها نه. */
     @WorkerThread
-    private fun applyOutboundLine(address: Address): Address {
-        val line = corePreferences.outboundLine
+    private fun needsOutboundLine(address: Address): Boolean {
+        val number = address.username.orEmpty()
+        return number.isNotEmpty() && number.isDigitsOnly() && number.length > 4
+    }
+
+    @WorkerThread
+    private fun applyOutboundLine(address: Address, line: String): Address {
         if (line.isEmpty() || line == "ask") return address
 
         val number = address.username.orEmpty()
@@ -1035,10 +1052,19 @@ class CoreContext
         callParams: CallParams? = null,
         forceZRTP: Boolean = false,
         localAddress: Address? = null,
-        skipNetworkReachabilityTest: Boolean = false
+        skipNetworkReachabilityTest: Boolean = false,
+        lineOverride: String? = null
     ) {
         if (!skipNetworkReachabilityTest && !core.isNetworkReachable) {
             Log.e("$TAG Network unreachable, abort outgoing call")
+            return
+        }
+
+        val line = lineOverride ?: corePreferences.outboundLine
+        if (line == "ask" && lineOverride == null && needsOutboundLine(address)) {
+            // صفحه می‌پرسد و بعد خودش دوباره صدا می‌زند، این بار با خط مشخص.
+            Log.i("$TAG Kariya: asking which company line to use")
+            askOutboundLineEvent.postValue(Event(address))
             return
         }
 
@@ -1050,7 +1076,7 @@ class CoreContext
             currentCall.pause()
         }
 
-        val dialed = applyOutboundLine(address)
+        val dialed = applyOutboundLine(address, line)
 
         val params = callParams ?: core.createCallParams(null)
         if (params == null) {
