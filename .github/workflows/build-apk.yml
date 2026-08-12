@@ -73,6 +73,11 @@ jobs:
       # می‌نشاند) و اگر ارسال نیمه‌کاره بماند، نسخه‌ی زنده دست‌نخورده می‌ماند.
       - name: انتشار روی CDN
         if: success()
+        # ⚠️ لینک SSH سرور گاهی چند دقیقه‌ای قطع می‌شود. بدون این دو مهلت، مرحله
+        # ساعت‌ها منتظر می‌ماند و بیلد را گروگان می‌گیرد؛ APK از قبل به‌عنوان
+        # artifact ذخیره شده، پس شکست این مرحله چیزی را از دست نمی‌دهد.
+        timeout-minutes: 8
+        continue-on-error: true
         env:
           DEPLOY_KEY: ${{ secrets.APK_DEPLOY_KEY }}
           DEPLOY_HOST: ${{ secrets.APK_DEPLOY_HOST }}
@@ -83,8 +88,17 @@ jobs:
           ssh-keyscan -p 23 -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
           echo "فرستادن $(basename "$APK") ($(stat -c%s "$APK") بایت)"
-          ssh -i ~/.ssh/apk_deploy -p 23 -o BatchMode=yes \
-              "kariya-apk@$DEPLOY_HOST" < "$APK"
+          for try in 1 2 3; do
+            echo "تلاش $try"
+            if ssh -i ~/.ssh/apk_deploy -p 23 -o BatchMode=yes \
+                   -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+                   "kariya-apk@$DEPLOY_HOST" < "$APK"; then
+              echo "منتشر شد"; break
+            fi
+            echo "تلاش $try ناموفق بود"
+            [ "$try" = 3 ] && echo "::warning::انتشار روی CDN نشد؛ APK در artifact هست"
+            sleep 20
+          done
           rm -f ~/.ssh/apk_deploy
 
       - name: بارگذاری گزارش خطا
