@@ -70,6 +70,10 @@ class DrawerMenuFragment : GenericMainFragment() {
 
         binding.lifecycleOwner = viewLifecycleOwner
         binding.viewModel = viewModel
+
+        // نسخه، زیر نام اپ. کاربری که وارد شده صفحه‌ی ورود را دیگر نمی‌بیند،
+        // پس این تنها جای همیشگی است که می‌شود دید روی گوشی کدام بیلد نشسته.
+        binding.brandVersion.text = org.linphone.BuildConfig.VERSION_NAME
         observeToastEvents(viewModel)
 
         binding.setSettingsClickedListener {
