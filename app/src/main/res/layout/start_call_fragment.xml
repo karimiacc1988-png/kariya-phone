@@ -6,6 +6,9 @@
     <data>
         <import type="android.view.View" />
         <variable
+            name="pasteClickListener"
+            type="android.view.View.OnClickListener" />
+        <variable
             name="backClickListener"
             type="View.OnClickListener" />
         <variable
@@ -127,16 +130,40 @@
                         android:hint="@string/history_call_start_search_bar_filter_hint"
                         android:inputType="text|textUri|textNoSuggestions"
                         android:paddingStart="15dp"
-                        android:paddingTop="10dp"
+                        android:paddingTop="12dp"
                         android:paddingEnd="45dp"
-                        android:paddingBottom="10dp"
+                        android:paddingBottom="12dp"
                         android:text="@={viewModel.searchFilter}"
-                        android:textSize="14sp"
+                        android:textSize="17sp"
+                        android:textDirection="ltr"
+                        android:gravity="center_vertical"
+                        android:textIsSelectable="false"
+                        android:longClickable="true"
+                        android:textCursorDrawable="@null"
                         app:layout_constraintHeight_min="48dp"
                         app:layout_constraintWidth_max="@dimen/text_input_max_width"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
+
+                    <!--
+                        چسباندن شماره از حافظه. کپی/پیستِ خودِ اندروید هم کار
+                        می‌کند (نگه‌داشتن روی کادر)، ولی یک دکمه‌ی آشکار سریع‌تر
+                        است — مخصوصاً وقتی شماره را از جای دیگری کپی کرده‌ای.
+                    -->
+                    <ImageView
+                        android:id="@+id/paste_number"
+                        android:layout_width="@dimen/icon_size"
+                        android:layout_height="@dimen/icon_size"
+                        android:layout_marginEnd="52dp"
+                        android:onClick="@{pasteClickListener}"
+                        android:contentDescription="@string/kariya_paste_number"
+                        android:src="@drawable/copy"
+                        android:visibility="@{viewModel.searchFilter.length() == 0 ? View.VISIBLE : View.GONE}"
+                        app:layout_constraintBottom_toBottomOf="@id/search_bar"
+                        app:layout_constraintEnd_toEndOf="@id/search_bar"
+                        app:layout_constraintTop_toTopOf="@id/search_bar"
+                        app:tint="?attr/color_main1_500" />
 
                     <ImageView
                         android:id="@+id/numpad"

@@ -105,6 +105,27 @@ class StartCallFragment : GenericAddressPickerFragment() {
         binding.viewModel = viewModel
         observeToastEvents(viewModel)
 
+        /*
+         * چسباندنِ شماره از حافظه. کپی/پیستِ خودِ اندروید هم کار می‌کند، ولی یک
+         * دکمه‌ی آشکار سریع‌تر است — و شماره‌ای که از جای دیگری کپی شده معمولا
+         * فاصله و خط‌تیره و `+98` دارد که همین‌جا پاک می‌شود.
+         */
+        binding.setPasteClickListener {
+            val clipboard = requireContext()
+                .getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                as? android.content.ClipboardManager
+            val text = clipboard?.primaryClip?.getItemAt(0)?.coerceToText(requireContext())
+                ?.toString().orEmpty()
+            val digits = text.filter { it.isDigit() || it == '+' }
+            if (digits.isEmpty()) {
+                Log.w("$TAG Clipboard has no number to paste")
+            } else {
+                Log.i("$TAG Pasting [$digits] from clipboard")
+                binding.searchBar.setText(digits)
+                binding.searchBar.setSelection(digits.length)
+            }
+        }
+
         binding.setBackClickListener {
             // If back button from UI was clicked, go back even if numpad is opened
             backPressedCallback.isEnabled = false
