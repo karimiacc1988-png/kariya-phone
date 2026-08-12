@@ -793,11 +793,11 @@ class CurrentCallViewModel
                 Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            Log.w("$TAG CAMERA permission isn't granted, requesting it")
-            requestCameraPermission.postValue(Event(true))
+            // کاریا: تماس تصویری وجود ندارد و مجوز دوربین هم از اپ برداشته شده.
+            // به‌جای باز کردن پنجره‌ی مجوز، بی‌سروصدا رد می‌شویم.
+            Log.i("$TAG Video disabled in this build, ignoring toggle")
             return
         }
-
         coreContext.postOnCoreThread { core ->
             if (::currentCall.isInitialized) {
                 val params = core.createCallParams(currentCall)

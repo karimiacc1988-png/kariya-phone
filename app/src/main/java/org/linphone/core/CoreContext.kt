@@ -808,7 +808,7 @@ class CoreContext
         // که روی مرکز تلفن ساخته شده خودش سرِ جایش بیاید و کسی چیزی وارد نکند.
         // در نخ جدا، چون یک درخواست شبکه است و نباید شروع اپ را کند کند.
         postOnCoreThread {
-            org.linphone.contacts.KariyaDirectory.sync()
+            org.linphone.contacts.KariyaDirectory.syncIfDue()
         }
 
         if (corePreferences.keepServiceAlive) {
@@ -1032,26 +1032,51 @@ class CoreContext
      * ⚠️ فقط روی تماس‌های بیرونی. داخلی‌ها (سه رقمی، مثل ۱۲۰) نباید پیش‌شماره
      * بگیرند وگرنه «۸۱۱۲۰» می‌شود و مرکز تلفن آن را نمی‌شناسد.
      */
+    /**
+     * شماره را به شکلی می‌آورد که مرکز تلفن می‌شناسد.
+     *
+     * ⚠️ شماره‌ای که از مخاطبین گوشی یا کلیپ‌بورد می‌آید معمولا `+98912…` است.
+     * مرکز تلفن فقط `09…` و `0…` را می‌شناسد، پس تماس با شماره‌های کپی‌شده
+     * اصلا برقرار نمی‌شد. این‌جا `+98` و `0098` به `0` برمی‌گردند و فاصله و
+     * خط‌تیره و پرانتز — که در شماره‌های ذخیره‌شده فراوان‌اند — حذف می‌شوند.
+     */
+    @WorkerThread
+    private fun normalisePhoneNumber(raw: String): String {
+        var digits = raw.filter { it.isDigit() || it == '+' }
+        if (digits.startsWith("+98")) digits = "0" + digits.substring(3)
+        else if (digits.startsWith("0098")) digits = "0" + digits.substring(4)
+        else if (digits.startsWith("98") && digits.length >= 12) digits = "0" + digits.substring(2)
+        else if (digits.startsWith("+")) digits = digits.substring(1)
+        return digits
+    }
+
     /** آیا این شماره اصلا خط بیرونی می‌خواهد؟ داخلی‌ها نه. */
     @WorkerThread
     private fun needsOutboundLine(address: Address): Boolean {
-        val number = address.username.orEmpty()
+        val number = normalisePhoneNumber(address.username.orEmpty())
         return number.isNotEmpty() && number.isDigitsOnly() && number.length > 4
     }
 
     @WorkerThread
     private fun applyOutboundLine(address: Address, line: String): Address {
-        if (line.isEmpty() || line == "ask") return address
-
-        val number = address.username.orEmpty()
+        val raw = address.username.orEmpty()
+        val number = normalisePhoneNumber(raw)
         if (number.isEmpty() || !number.isDigitsOnly()) return address
-        if (number.length <= 4) return address           // داخلی، نه شماره‌ی بیرونی
-        if (number.startsWith(line)) return address      // از قبل پیش‌شماره خورده
 
-        val prefixed = address.clone()
-        prefixed.username = line + number
-        Log.i("$TAG Kariya: dialling [$number] on line [$line]")
-        return prefixed
+        /*
+         * ⚠️ حتی وقتی خطی انتخاب نشده، شماره باید پاک‌سازی شود. شماره‌ای که از
+         * مخاطبین یا کلیپ‌بورد می‌آید `+98912…` است و مرکز تلفن آن را نمی‌شناسد؛
+         * نسخه‌ی اول فقط برای انتخابِ خط پاک‌سازی می‌کرد و خودِ تماس با شماره‌ی
+         * خام می‌رفت، پس تماس با شماره‌های کپی‌شده اصلا برقرار نمی‌شد.
+         */
+        val prefix = if (line.isEmpty() || line == "ask" || number.length <= 4) "" else line
+        if (prefix.isEmpty() && number == raw) return address     // چیزی برای تغییر نیست
+        if (prefix.isNotEmpty() && number.startsWith(prefix)) return address
+
+        val dialled = address.clone()
+        dialled.username = prefix + number
+        Log.i("$TAG Kariya: dialling [$number] on line [${prefix.ifEmpty { "پیش‌فرض" }}]")
+        return dialled
     }
 
     fun startCall(

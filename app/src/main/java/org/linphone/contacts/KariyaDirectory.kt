@@ -13,6 +13,7 @@
  */
 package org.linphone.contacts
 
+import android.net.Uri
 import android.util.Base64
 import androidx.annotation.WorkerThread
 import java.io.File
@@ -22,6 +23,7 @@ import java.net.URL
 import org.json.JSONObject
 import org.linphone.LinphoneApplication.Companion.coreContext
 import org.linphone.LinphoneApplication.Companion.corePreferences
+import org.linphone.core.Factory
 import org.linphone.core.Friend
 import org.linphone.core.FriendList
 import org.linphone.core.tools.Log
@@ -44,6 +46,42 @@ object KariyaDirectory {
      * ⚠️ اگر شبکه نبود یا پاسخ خراب بود، فهرستِ قبلی دست‌نخورده می‌ماند. پاک‌کردنِ
      * مخاطب‌ها به‌خاطر یک قطعیِ موقت، بدترین کاری است که می‌شود کرد.
      */
+    /**
+     * همگام‌سازی، ولی فقط اگر امروز انجام نشده باشد.
+     *
+     * دفترچه‌ی همکاران روزی یک بار تازه می‌شود — نه هر بار که اپ بالا می‌آید.
+     * فهرست داخلی‌ها هفته‌ها ثابت می‌ماند؛ گرفتنش در هر اجرا فقط به سرور و به
+     * اینترنتِ گوشی فشار می‌آورد.
+     *
+     * ⚠️ «ساعت سه صبح» به‌معنای بیدارکردنِ گوشی نیست: اپ در آن ساعت ممکن است
+     * اصلا اجرا نباشد. قاعده این است که هر بار اپ بالا آمد، اگر از آخرین
+     * همگام‌سازی یک «مرز سه صبح» گذشته باشد، دوباره می‌گیرد. نتیجه همان است —
+     * فهرست هر روز تازه می‌شود — بدون سرویسِ پس‌زمینه و مصرف باتری.
+     */
+    @WorkerThread
+    fun syncIfDue() {
+        val now = System.currentTimeMillis()
+        val last = corePreferences.kariyaDirectorySyncedAt
+
+        val calendar = java.util.Calendar.getInstance().apply {
+            timeInMillis = now
+            set(java.util.Calendar.HOUR_OF_DAY, 3)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        // آخرین مرز سه صبحی که گذشته است
+        var boundary = calendar.timeInMillis
+        if (boundary > now) boundary -= 24L * 60 * 60 * 1000
+
+        if (last in (boundary + 1)..now) {
+            Log.i("$TAG Colleagues already synced after the 03:00 mark, skipping")
+            return
+        }
+        sync()
+        corePreferences.kariyaDirectorySyncedAt = System.currentTimeMillis()
+    }
+
     @WorkerThread
     fun sync() {
         /*
@@ -80,6 +118,17 @@ object KariyaDirectory {
             val friend = core.createFriend()
             friend.name = name
             friend.addAddress(address)
+
+            /*
+             * ⚠️ شماره‌ی داخلی جدا از نشانی SIP هم اضافه می‌شود. نسخه‌ی اول فقط
+             * نشانی داشت و نتیجه‌اش این بود که همکاران در فهرست دیده می‌شدند ولی
+             * دکمه‌ی تماس نداشتند — چون صفحه‌ی مخاطب برای زنگ‌زدن دنبال «شماره»
+             * می‌گردد، نه نشانی.
+             */
+            Factory.instance().createFriendPhoneNumber(ext, "داخلی")?.let {
+                friend.addPhoneNumberWithLabel(it)
+            }
+
             friend.isSubscribesEnabled = false                 // حضور و غیاب لازم نداریم
             savePhoto(item.optString("avatar"), ext)?.let { friend.photo = it }
             friends.add(friend)
@@ -159,6 +208,20 @@ object KariyaDirectory {
         }
     }
 
+    /**
+     * شماره را به شکلی می‌آورد که پنل با آن کلید می‌زند: `۰۹۱۲…`.
+     * `+98`، `0098` و `98` همگی یک نفرند.
+     */
+    private fun normalise(raw: String): String {
+        val digits = raw.filter { it.isDigit() }
+        return when {
+            digits.startsWith("98") && digits.length >= 12 -> "0" + digits.substring(2)
+            digits.startsWith("0") -> digits
+            digits.length >= 10 -> "0$digits"
+            else -> digits
+        }
+    }
+
     /** شماره‌هایی که قبلا پرسیده‌ایم — تا برای هر تماس دوباره به سرور نزنیم. */
     private val nameCache = mutableMapOf<String, String>()
 
@@ -173,7 +236,13 @@ object KariyaDirectory {
      */
     @WorkerThread
     fun lookupName(number: String): String? {
-        val digits = number.filter { it.isDigit() }
+        /*
+         * ⚠️ همان شکلی که سرور کلید می‌زند: `۰۹۱۲…`. نسخه‌ی اول رقم‌های خام را
+         * می‌فرستاد (`۹۸۹۱۲…` وقتی شماره با `+98` آمده بود) و بعد در پاسخ دنبال
+         * همان کلید می‌گشت — ولی سرور با شکل استاندارد کلید می‌زند، پس نام پیدا
+         * می‌شد و اپ نمی‌دیدش.
+         */
+        val digits = normalise(number)
         if (digits.length < 10) return null                 // داخلی‌ها را نمی‌پرسیم
         nameCache[digits]?.let { return it.ifEmpty { null } }
 
@@ -230,7 +299,12 @@ object KariyaDirectory {
             if (!folder.exists()) folder.mkdirs()
             val file = File(folder, "$ext.jpg")
             FileOutputStream(file).use { it.write(bytes) }
-            file.absolutePath
+            /*
+             * ⚠️ نشانی فایل، نه مسیر خام. نسخه‌ی اول `absolutePath` می‌داد و
+             * عکس‌ها اصلا نشان داده نمی‌شدند — لینفون این مقدار را به‌عنوان URI
+             * می‌خواند و یک مسیر بدون `file://` برایش بی‌معناست.
+             */
+            Uri.fromFile(file).toString()
         } catch (error: Exception) {
             Log.e("$TAG Could not store photo for [$ext]: $error")
             null

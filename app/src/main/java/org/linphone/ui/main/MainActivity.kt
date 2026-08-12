@@ -132,6 +132,13 @@ class MainActivity : GenericActivity() {
             Log.i("$TAG Startup permission [$permission] granted [$granted]")
         }
         viewModel.updateMissingPermissionAlert()
+
+        // اگر همین حالا اجازه‌ی مخاطبین را داد، دفترچه‌ی گوشی را بخوان — وگرنه
+        // تا باز و بسته‌کردن بعدیِ اپ خالی می‌ماند.
+        if (results[Manifest.permission.READ_CONTACTS] == true) {
+            Log.i("$TAG Contacts permission just granted, loading device contacts")
+            loadContacts()
+        }
     }
 
     @UiThread

@@ -481,9 +481,9 @@
     <string name="contacts_change_filter_label">تغییر فیلتر</string>
     <string name="contacts_list_favourites_title">علاقه‌مندی‌ها</string>
     <string name="contacts_list_all_contacts_title">همه مخاطبین</string>
-    <string name="contacts_list_filter_popup_see_all">نمایش همه</string>
-    <string name="contacts_list_filter_popup_see_linphone_only">نمایش مخاطبین &appName;</string>
-    <string name="contacts_list_filter_popup_see_sip_only">نمایش مخاطبین SIP</string>
+    <string name="contacts_list_filter_popup_see_all">همه (همکاران و دفترچه گوشی)</string>
+    <string name="contacts_list_filter_popup_see_linphone_only">فقط همکاران کاریا</string>
+    <string name="contacts_list_filter_popup_see_sip_only">فقط داخلی‌ها</string>
     <string name="contacts_list_search_results_limit_reached_label">به حد نتایج جستجو رسیدید، جستجوی خود را دقیق‌تر کنید.</string>
 
     <string name="contact_new_title">مخاطب جدید</string>

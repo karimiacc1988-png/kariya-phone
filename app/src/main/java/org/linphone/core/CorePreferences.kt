@@ -118,6 +118,36 @@ class CorePreferences
         }
 
     /**
+     * شماره‌ی موبایلی که با آن وارد شده — دفترچه‌ی همکاران با همین از پنل
+     * گرفته می‌شود، چون پنل فهرست را فقط به کسی می‌دهد که خودش داخلی دارد.
+     */
+    @get:AnyThread @set:WorkerThread
+    var kariyaMobile: String
+        get() = config.getString("app", "kariya_mobile", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "kariya_mobile", value.trim())
+        }
+
+    /**
+     * آخرین باری که دفترچه‌ی همکاران از پنل گرفته شد.
+     * روزی یک بار کافی است؛ فهرست داخلی‌ها هفته‌ها ثابت می‌ماند.
+     */
+    @get:AnyThread @set:WorkerThread
+    var kariyaDirectorySyncedAt: Long
+        get() = config.getInt("app", "kariya_directory_synced_at", 0).toLong() * 1000L
+        set(value) {
+            config.setInt("app", "kariya_directory_synced_at", (value / 1000L).toInt())
+        }
+
+    /** داخلی خودِ کاربر، تا در فهرست همکاران خودش را نبیند. */
+    @get:AnyThread @set:WorkerThread
+    var kariyaExtension: String
+        get() = config.getString("app", "kariya_extension", "").orEmpty().trim()
+        set(value) {
+            config.setString("app", "kariya_extension", value.trim())
+        }
+
+    /**
      * کدام خط شرکت روی تلفنِ مشتری بیفتد.
      *
      * مرکز تلفن خط را از روی پیش‌شماره تشخیص می‌دهد: `81` خدمات حسابداری،
@@ -130,25 +160,6 @@ class CorePreferences
      * ⚠️ عمداً `81` را «پیش‌فرضِ خاموش» نگرفتیم: اگر کسی خط را انتخاب نکرده،
      * بهتر است یک بار بپرسیم تا اینکه بی‌خبر با خطِ اشتباه زنگ بزند.
      */
-    /**
-     * شماره‌ی موبایلی که با آن وارد شده — دفترچه‌ی همکاران با همین از پنل
-     * گرفته می‌شود، چون پنل فهرست را فقط به کسی می‌دهد که خودش داخلی دارد.
-     */
-    @get:AnyThread @set:WorkerThread
-    var kariyaMobile: String
-        get() = config.getString("app", "kariya_mobile", "").orEmpty().trim()
-        set(value) {
-            config.setString("app", "kariya_mobile", value.trim())
-        }
-
-    /** داخلی خودِ کاربر، تا در فهرست همکاران خودش را نبیند. */
-    @get:AnyThread @set:WorkerThread
-    var kariyaExtension: String
-        get() = config.getString("app", "kariya_extension", "").orEmpty().trim()
-        set(value) {
-            config.setString("app", "kariya_extension", value.trim())
-        }
-
     @get:AnyThread @set:WorkerThread
     var outboundLine: String
         get() = config.getString("app", "kariya_outbound_line", "").orEmpty().trim()
