@@ -1085,6 +1085,7 @@
     <string name="kariya_offline_call_failed">تماس آفلاین برقرار نشد</string>
     <string name="kariya_network_weak">اینترنت ضعیف است — بهتر است «تماس آفلاین» بگیرید</string>
     <string name="kariya_paste_number">چسباندن شماره</string>
+    <string name="kariya_sip_auth_failed">اتصال به مرکز تلفن برقرار نشد. اگر ادامه داشت، یک بار از برنامه خارج و دوباره وارد شوید.</string>
     <string name="kariya_login_send_code_sms">دریافت کد با پیامک</string>
     <string name="kariya_login_code_hint">کد را وارد کنید</string>
     <string name="kariya_login_verify">ورود</string>

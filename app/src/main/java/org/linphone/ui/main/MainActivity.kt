@@ -366,13 +366,20 @@ class MainActivity : GenericActivity() {
 
         coreContext.digestAuthenticationRequestedEvent.observe(this) {
             it.consume { identity ->
-                try {
-                    if (coreContext.digestAuthInfoPendingPasswordUpdate != null) {
-                        showAuthenticationRequestedDialog(identity)
-                    }
-                } catch (e: WindowManager.BadTokenException) {
-                    Log.e("$TAG Failed to show authentication dialog: $e")
-                }
+                /*
+                 * ⚠️ پنجره‌ی «رمز را وارد کنید» برای کارمند بی‌معناست: او رمز SIP
+                 * را نمی‌داند و نباید بداند — حسابش با شماره‌ی موبایل ساخته
+                 * می‌شود و رمز را سرور می‌دهد. دیدنِ آن پنجره فقط سردرگمش می‌کرد
+                 * و شبیه «صفحه‌ی ثبت‌نام» به نظر می‌رسید.
+                 *
+                 * به‌جایش یک پیام روشن می‌دهیم؛ اگر واقعا رمز عوض شده باشد، کارِ
+                 * مدیر سیستم است نه کاربر.
+                 */
+                Log.w("$TAG SIP auth failed for [$identity], telling the user to re-login")
+                showRedToast(
+                    getString(R.string.kariya_sip_auth_failed),
+                    R.drawable.warning_circle
+                )
             }
         }
 
@@ -867,35 +874,11 @@ coreContext.showGreenToastEvent.observe(this) {
         }
     }
 
-    private fun showAuthenticationRequestedDialog(identity: String) {
-        currentlyDisplayedAuthDialog?.dismiss()
-
-        val label = AppUtils.getFormattedString(
-            R.string.account_settings_dialog_invalid_password_message,
-            identity
-        )
-        val model = PasswordDialogModel(label)
-        val dialog = DialogUtils.getAuthRequestedDialog(this, model)
-
-        model.dismissEvent.observe(this) {
-            it.consume {
-                dialog.dismiss()
-            }
-        }
-
-        model.confirmEvent.observe(this) {
-            it.consume { password ->
-                coreContext.postOnCoreThread {
-                    coreContext.updateAuthInfo(password)
-                }
-                dialog.dismiss()
-            }
-        }
-
-        dialog.show()
-        currentlyDisplayedAuthDialog = dialog
-    }
-
+    /*
+     * ⚠️ پنجره‌ی «رمز را وارد کنید» برداشته شد. کارمند رمز SIP را نمی‌داند و
+     * نباید بداند؛ دیدنِ آن پنجره شبیه «صفحه‌ی ثبت‌نام» به نظر می‌رسید و
+     * کاربران تازه را سردرگم می‌کرد. حالا فقط یک پیام روشن نشان داده می‌شود.
+     */
     private fun exportFileToNativeMediaGallery(filePath: String) {
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
