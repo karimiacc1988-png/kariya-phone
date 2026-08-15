@@ -1050,17 +1050,49 @@ class CoreContext
         return digits
     }
 
+    /**
+     * پیش‌شماره‌ی خط‌های شرکت. عدد است و ترجمه نمی‌شود.
+     *
+     * 🔺 برچسب فارسیِ همین‌ها در `DrawerMenuFragment.kariyaLines` است. اگر خطی
+     * اضافه شد، هر دو جا باید عوض شود.
+     */
+    private val kariyaLinePrefixes = listOf("81", "82", "83")
+
+    /**
+     * پیش‌شماره‌ای که از قبل روی شماره نشسته را برمی‌دارد.
+     *
+     * ⚠️ **این تابع از یک باگ واقعی درآمد.** سوابق تماس شماره را همان‌طور که
+     * گرفته شده ذخیره می‌کند، یعنی همراه با پیش‌شماره. کاربر که از سوابق یا از
+     * مخاطبی که یک بار گرفته بود دوباره تماس می‌گرفت، پیش‌شماره‌ی تازه روی
+     * قبلی می‌نشست و `818209123449220` به مرکز تلفن می‌رفت. مسیر خروجی فقط
+     * اولی را برمی‌داشت و شاتل شماره‌ی `8209123449220` را می‌دید که وجود
+     * ندارد، پس `486` می‌داد — و از بیرون این‌طور دیده می‌شد که «با خط ۴۰۴۸
+     * اصلا تماس نمی‌رود».
+     *
+     * ⚠️ شرطِ `length > 4` مهم است: شماره‌ی واقعیِ ایران همیشه با صفر شروع
+     * می‌شود، پس چیزی که با ۸۱ یا ۸۲ شروع شود و بلندتر از چهار رقم باشد حتما
+     * پیش‌شماره دارد. داخلی‌های سه‌رقمی از این حلقه رد نمی‌شوند.
+     */
+    private fun stripLinePrefix(number: String): String {
+        var value = number
+        while (value.length > 4) {
+            val prefix = kariyaLinePrefixes.firstOrNull { value.startsWith(it) } ?: break
+            value = value.removePrefix(prefix)
+        }
+        return value
+    }
+
     /** آیا این شماره اصلا خط بیرونی می‌خواهد؟ داخلی‌ها نه. */
     @WorkerThread
     private fun needsOutboundLine(address: Address): Boolean {
-        val number = normalisePhoneNumber(address.username.orEmpty())
+        val number = stripLinePrefix(normalisePhoneNumber(address.username.orEmpty()))
         return number.isNotEmpty() && number.isDigitsOnly() && number.length > 4
     }
 
     @WorkerThread
     private fun applyOutboundLine(address: Address, line: String): Address {
         val raw = address.username.orEmpty()
-        val number = normalisePhoneNumber(raw)
+        val number = stripLinePrefix(normalisePhoneNumber(raw))
         if (number.isEmpty() || !number.isDigitsOnly()) return address
 
         /*
@@ -1071,7 +1103,11 @@ class CoreContext
          */
         val prefix = if (line.isEmpty() || line == "ask" || number.length <= 4) "" else line
         if (prefix.isEmpty() && number == raw) return address     // چیزی برای تغییر نیست
-        if (prefix.isNotEmpty() && number.startsWith(prefix)) return address
+
+        /* 🔺 این‌جا قبلا یک شرطِ «اگر از قبل همین پیش‌شماره را دارد رد شو» بود.
+           حالا `stripLinePrefix` هر پیش‌شماره‌ای را برداشته، پس شماره هیچ‌وقت
+           با پیش‌شماره شروع نمی‌شود و آن شرط بی‌اثر بود — بدتر، فقط جلوی
+           تکرارِ *همان* پیش‌شماره را می‌گرفت و ۸۱ روی ۸۲ از زیرش رد می‌شد. */
 
         val dialled = address.clone()
         dialled.username = prefix + number

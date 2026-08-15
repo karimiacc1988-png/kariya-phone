@@ -362,7 +362,25 @@ object KariyaDirectory {
      * `+98`، `0098` و `98` همگی یک نفرند.
      */
     private fun normalise(raw: String): String {
-        val digits = raw.filter { it.isDigit() }
+        var digits = raw.filter { it.isDigit() }
+
+        /*
+         * ⚠️ پیش‌شماره‌ی خط شرکت اول برداشته می‌شود.
+         *
+         * سوابق تماس شماره را با پیش‌شماره ذخیره می‌کند (`8209123449220`). بدون
+         * این، اسم صاحبِ شماره روی هیچ‌کدام از تماس‌های خروجی نمی‌افتاد — سرور
+         * با `0912…` جواب می‌دهد و ما `8209…` می‌پرسیدیم.
+         *
+         * 🔺 پیش‌شماره‌ها در `CoreContext.kariyaLinePrefixes` هم هستند؛ همان
+         * فهرست است و با هم عوض می‌شوند.
+         */
+        while (digits.length > 4 && (
+                digits.startsWith("81") || digits.startsWith("82") || digits.startsWith("83")
+                )
+        ) {
+            digits = digits.substring(2)
+        }
+
         return when {
             digits.startsWith("98") && digits.length >= 12 -> "0" + digits.substring(2)
             digits.startsWith("0") -> digits
