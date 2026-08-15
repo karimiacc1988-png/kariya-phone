@@ -139,6 +139,21 @@ class CorePreferences
             config.setInt("app", "kariya_directory_synced_at", (value / 1000L).toInt())
         }
 
+    /**
+     * نسخه‌ی برنامه در آخرین همگام‌سازیِ دفترچه.
+     *
+     * ⚠️ بدون این، نصبِ نسخه‌ی تازه دفترچه را تازه نمی‌کرد. کسی که فهرست
+     * همکارانش از یک نسخه‌ی قدیمی و ناقص مانده بود — مثلا بدون عکس — تا سه
+     * صبحِ فردا همان را می‌دید، و از بیرون این‌طور به نظر می‌رسید که اصلاح
+     * اصلا انجام نشده. حالا هر بار که نسخه عوض شود، یک بار همگام می‌شود.
+     */
+    @get:AnyThread @set:WorkerThread
+    var kariyaDirectorySyncedVersion: String
+        get() = config.getString("app", "kariya_directory_synced_version", "")!!
+        set(value) {
+            config.setString("app", "kariya_directory_synced_version", value)
+        }
+
     /** داخلی خودِ کاربر، تا در فهرست همکاران خودش را نبیند. */
     @get:AnyThread @set:WorkerThread
     var kariyaExtension: String

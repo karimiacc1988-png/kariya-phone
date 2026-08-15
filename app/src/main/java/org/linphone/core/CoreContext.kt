@@ -684,6 +684,7 @@ class CoreContext
 
         core = Factory.instance().createCoreWithConfig(corePreferences.config, context)
         core.isAutoIterateEnabled = true
+        enforceKariyaPolicy()
         core.addListener(coreListener)
 
         defaultAccountHasVideoConferenceFactoryUri = core.defaultAccount?.params?.audioVideoConferenceFactoryAddress != null
@@ -701,6 +702,73 @@ class CoreContext
     override fun quitSafely(): Boolean {
         destroyCore()
         return super.quitSafely()
+    }
+
+    /**
+     * چیزهایی که در «کاریا فون» همیشه باید همین‌طور باشند، هر بار که برنامه
+     * بالا می‌آید.
+     *
+     * ⚠️ **این تابع از یک اشتباه واقعی درآمد و مهم‌ترین درسِ این برنامه است.**
+     * همه‌ی این‌ها در `assets/linphonerc_factory` هم هستند، ولی آن فایل فقط
+     * روی نصبِ **اول** خوانده می‌شود. کسی که نسخه‌ی قبلی را داشت و روی آن
+     * آپدیت کرد، `linphonerc` خودش را نگه می‌دارد — با ویدیوی روشن و
+     * تنظیماتِ حساب باز. نتیجه این بود که هرچه در فایل کارخانه خاموش کرده
+     * بودیم، برای کسانی که از قبل برنامه را داشتند خاموش نمی‌شد؛ دوربین سر
+     * جایش بود و صفحه‌ی رمز هنوز می‌آمد، و از بیرون این‌طور دیده می‌شد که
+     * «درست نشده».
+     *
+     * پس از این به بعد: هر تنظیمی که برای کاریا حیاتی است این‌جا هم اجبار
+     * می‌شود، نه فقط در فایل کارخانه.
+     */
+    @WorkerThread
+    private fun enforceKariyaPolicy() {
+        val config = core.config
+
+        // ── تماس تصویری وجود ندارد ─────────────────────────────────────────
+        // مرکز تلفن دفتر فقط صداست. `hideVideo` در صفحه‌ی تماس از همین
+        // `isVideoEnabled` می‌آید، پس تا این خاموش نشود دکمه‌ی دوربین می‌ماند.
+        core.isVideoCaptureEnabled = false
+        core.isVideoDisplayEnabled = false
+        core.isVideoPreviewEnabled = false
+        val policy = core.videoActivationPolicy
+        policy.automaticallyInitiate = false
+        policy.automaticallyAccept = false
+        core.videoActivationPolicy = policy
+        config.setInt("video", "capture", 0)
+        config.setInt("video", "display", 0)
+
+        // ── چیزهایی که کارمند نباید ببیند ──────────────────────────────────
+        // نشانی SIP یعنی آی‌پی سرور؛ تنظیمات حساب یعنی صفحه‌ی نام کاربری و رمز.
+        config.setInt("ui", "hide_account_settings", 1)
+        config.setInt("ui", "hide_advanced_settings", 1)
+        config.setInt("ui", "hide_sip_addresses", 1)
+        config.setInt("ui", "show_letters_on_dialpad", 0)
+
+        // ── شبکه ───────────────────────────────────────────────────────────
+        // ICE روی این مرکز تلفن فقط تاخیر می‌سازد و صدا را دیر برقرار می‌کند.
+        config.setInt("net", "force_ice_disablement", 1)
+        config.setInt("net", "mtu", 1300)
+
+        /*
+         * ── تعمیرِ یک‌باره برای کسانی که از نسخه‌ی قدیمی آپدیت کرده‌اند ──────
+         *
+         * ⚠️ این‌ها برخلافِ بالا **انتخابِ کاربرند**، نه سیاست: فیلترِ فهرست
+         * مخاطبین را خودش از منوی بالای صفحه عوض می‌کند. پس فقط یک بار
+         * برمی‌گردانده می‌شوند، نه در هر بالا آمدن — وگرنه هر بار که کاربر
+         * فیلتری بگذارد، دفعه‌ی بعد بی‌صدا برمی‌گشت و دیوانه‌اش می‌کرد.
+         *
+         * لازم شد چون `linphonerc_factory` فقط روی نصبِ اول خوانده می‌شود و
+         * کسانی که آپدیت کردند مخاطبینِ گوشی‌شان را در فهرست نمی‌دیدند.
+         */
+        if (config.getInt("app", "kariya_contacts_repaired", 0) == 0) {
+            config.setString("ui", "contacts_filter", "")            // همه‌ی مخاطبین، نه فقط سیپ
+            config.setBool("app", "fetch_contacts_from_default_directory", false)
+            config.setBool("ui", "hide_contacts_without_phone_number_or_sip_address", false)
+            config.setInt("app", "kariya_contacts_repaired", 1)
+            Log.i("$TAG Kariya: contacts settings repaired once for upgraded installs")
+        }
+
+        Log.i("$TAG Kariya: policy enforced (video off, account settings hidden)")
     }
 
     @WorkerThread
@@ -808,6 +876,8 @@ class CoreContext
         // که روی مرکز تلفن ساخته شده خودش سرِ جایش بیاید و کسی چیزی وارد نکند.
         // در نخ جدا، چون یک درخواست شبکه است و نباید شروع اپ را کند کند.
         postOnCoreThread {
+            /* فقط سنجشِ ارزان این‌جاست؛ خودِ همگام‌سازی روی رشته‌ی خودش
+               می‌رود — چرایش در `KariyaDirectory.syncIfDue`. */
             org.linphone.contacts.KariyaDirectory.syncIfDue()
         }
 

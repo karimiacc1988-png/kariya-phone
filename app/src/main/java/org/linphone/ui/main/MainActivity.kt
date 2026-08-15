@@ -66,7 +66,6 @@ import org.linphone.databinding.MainActivityBinding
 import org.linphone.ui.GenericActivity
 import org.linphone.ui.assistant.AssistantActivity
 import org.linphone.ui.main.chat.fragment.ConversationsListFragmentDirections
-import org.linphone.utils.PasswordDialogModel
 import org.linphone.ui.main.viewmodel.MainViewModel
 import org.linphone.ui.main.viewmodel.SharedMainViewModel
 import org.linphone.ui.welcome.WelcomeActivity

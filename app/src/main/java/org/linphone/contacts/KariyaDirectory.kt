@@ -95,22 +95,42 @@ object KariyaDirectory {
         // اگر فهرست همکاران خالی است، بی‌توجه به زمان همگام کن — وگرنه کاربری
         // که همگام‌سازی‌اش یک بار (به هر دلیل) ناموفق بود، تا فردا صبح بی‌مخاطب
         // می‌ماند.
-        val listEmpty = (coreContext.core.getFriendListByName(LIST_NAME)?.friends?.size ?: 0) == 0
+        val friends = coreContext.core.getFriendListByName(LIST_NAME)?.friends
+        val listEmpty = (friends?.size ?: 0) == 0
 
-        if (!listEmpty && last in (boundary + 1)..now) {
+        /*
+         * ⚠️ نصبِ نسخه‌ی تازه هم یک بار همگام‌سازی می‌خواهد.
+         *
+         * بدون این، کسی که فهرستش از نسخه‌ی قدیمی مانده بود — مثلا بدون عکس،
+         * چون آن نسخه عکس‌ها را درست ذخیره نمی‌کرد — تا سه صبحِ فردا همان را
+         * می‌دید و به نظر می‌رسید اصلاح اصلا انجام نشده. هر بار که نسخه عوض
+         * شود، دفترچه یک بار از نو گرفته می‌شود.
+         */
+        val version = org.linphone.BuildConfig.VERSION_NAME
+        val newVersion = corePreferences.kariyaDirectorySyncedVersion != version
+
+        /* و اگر هیچ‌کدام عکس ندارند، یعنی همگام‌سازیِ قبلی ناقص بوده. */
+        val noPhotos = !listEmpty && friends!!.none { !it.photo.isNullOrEmpty() }
+
+        if (!listEmpty && !newVersion && !noPhotos && last in (boundary + 1)..now) {
             Log.i("$TAG Colleagues already synced after the 03:00 mark, skipping")
             return
         }
-        sync()
-        corePreferences.kariyaDirectorySyncedAt = System.currentTimeMillis()
-    }
+        if (newVersion) Log.i("$TAG App version changed to [$version], refreshing colleagues")
+        if (noPhotos) Log.w("$TAG No colleague has a photo, previous sync was incomplete")
 
-    @WorkerThread
-    fun sync() {
         /*
-         * ⚠️ داخلی از خودِ حسابِ ثبت‌شده خوانده می‌شود، نه از تنظیماتِ ذخیره‌شده.
-         * نسخه‌ی اول به شماره‌ی موبایل تکیه می‌کرد که فقط هنگام ورود نوشته می‌شد،
-         * و نتیجه‌اش این بود که هرکس از قبل وارد شده بود دفترچه‌اش هرگز نمی‌آمد.
+         * ⚠️ **کارِ کُند روی رشته‌ی هسته نمی‌ماند.**
+         *
+         * این تابع روی رشته‌ی هسته صدا زده می‌شود — همانی که ثبتِ SIP و
+         * تماس‌ها را می‌گرداند. تا این‌جا فقط چند خواندنِ ارزان بوده و اشکالی
+         * ندارد، ولی خودِ همگام‌سازی یک درخواست شبکه‌ای است به‌علاوه‌ی
+         * رمزگشایی و نوشتنِ یازده عکس روی دیسک. قبلا همه‌اش همین‌جا انجام
+         * می‌شد و برنامه موقع بالا آمدن کُند به نظر می‌رسید.
+         *
+         * حالا آن بخش روی رشته‌ی خودش می‌رود و فقط برای دست‌زدن به لینفون
+         * برمی‌گردد. داخلی و موبایل همین‌جا برداشته می‌شوند، چون خواندنشان
+         * هم کارِ هسته است.
          */
         val account = coreContext.core.defaultAccount
         val myExtension = account?.params?.identityAddress?.username.orEmpty()
@@ -120,6 +140,22 @@ object KariyaDirectory {
             return
         }
 
+        corePreferences.kariyaDirectorySyncedAt = System.currentTimeMillis()
+        corePreferences.kariyaDirectorySyncedVersion = version
+
+        Thread({ syncInBackground(mobile, myExtension) }, "kariya-directory")
+            .apply { isDaemon = true }
+            .start()
+    }
+
+    /**
+     * بخشِ کُندِ همگام‌سازی: گرفتن فهرست از پنل و نوشتنِ عکس‌ها روی دیسک.
+     *
+     * ⚠️ این‌جا **هیچ تماسی با لینفون گرفته نمی‌شود**. آن‌چه لازم است ساخته
+     * می‌شود و بعد یک‌جا به رشته‌ی هسته سپرده می‌شود؛ لینفون از رشته‌ی دیگر
+     * صدا زده نمی‌شود.
+     */
+    private fun syncInBackground(mobile: String, myExtension: String) {
         val payload = fetch(mobile, myExtension) ?: return
         val colleagues = payload.optJSONArray("colleagues") ?: return
         val domain = payload.optString("domain")
@@ -128,6 +164,35 @@ object KariyaDirectory {
             return
         }
 
+        /* عکس‌ها همین‌جا روی دیسک می‌نشینند — کندترین بخشِ کار. */
+        val photos = mutableMapOf<String, String>()
+        for (index in 0 until colleagues.length()) {
+            val item = colleagues.optJSONObject(index) ?: continue
+            val ext = item.optString("ext")
+            if (ext.isEmpty()) continue
+            savePhoto(item.optString("avatar"), ext)?.let { photos[ext] = it }
+        }
+        Log.i("$TAG Fetched [${colleagues.length()}] colleagues, [${photos.size}] with a photo")
+
+        coreContext.postOnCoreThread {
+            applyToCore(colleagues, domain, myExtension, photos)
+        }
+    }
+
+    /**
+     * ساختنِ فهرستِ همکاران از روی چیزی که پیش‌تر گرفته شده.
+     *
+     * ⚠️ فقط روی رشته‌ی هسته. همه‌ی کارِ شبکه و دیسک قبلا در
+     * `syncInBackground` تمام شده؛ این‌جا فقط شیءهای لینفون ساخته می‌شوند.
+     */
+    @WorkerThread
+    private fun applyToCore(
+        colleagues: org.json.JSONArray,
+        domain: String,
+        myExtension: String,
+        photos: Map<String, String>
+    ) {
+        val account = coreContext.core.defaultAccount
         val core = coreContext.core
 
         val friends = arrayListOf<Friend>()
@@ -153,14 +218,14 @@ object KariyaDirectory {
             }
 
             friend.isSubscribesEnabled = false                 // حضور و غیاب لازم نداریم
-            savePhoto(item.optString("avatar"), ext)?.let { friend.photo = it }
+            photos[ext]?.let { friend.photo = it }             // از قبل روی دیسک نشسته
             friends.add(friend)
         }
 
         // عکس و نامِ خودِ کاربر روی حسابش می‌نشیند تا بالای کشو دیده شود.
         // در حلقه‌ی بالا عمداً کنار گذاشته شد (کسی خودش را در فهرست نمی‌خواهد)،
         // ولی این‌جا لازم است.
-        applyOwnProfile(colleagues, myExtension, account)
+        applyOwnProfile(colleagues, myExtension, account, photos)
 
         if (friends.isEmpty()) {
             Log.w("$TAG Directory came back empty, leaving existing contacts alone")
@@ -199,14 +264,15 @@ object KariyaDirectory {
     private fun applyOwnProfile(
         colleagues: org.json.JSONArray,
         myExtension: String,
-        account: org.linphone.core.Account?
+        account: org.linphone.core.Account?,
+        photos: Map<String, String>
     ) {
         if (account == null || myExtension.isEmpty()) return
         for (index in 0 until colleagues.length()) {
             val item = colleagues.optJSONObject(index) ?: continue
             if (item.optString("ext") != myExtension) continue
 
-            val photo = savePhoto(item.optString("avatar"), myExtension)
+            val photo = photos[myExtension]      // از قبل روی دیسک نشسته
             val name = item.optString("name")
 
             val params = account.params
