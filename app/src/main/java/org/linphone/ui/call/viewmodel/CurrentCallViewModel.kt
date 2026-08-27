@@ -147,6 +147,14 @@ class CurrentCallViewModel
     /** بعد از زدنِ «بی‌صدا»، تا خودِ دکمه بداند دیگر کاری ندارد. */
     val ringingSilenced = MutableLiveData<Boolean>()
 
+    /**
+     * تماسِ ورودی همین حالا در حالِ زنگ‌خوردن است.
+     *
+     * ⚠️ لازم شد چون دکمه‌ی صدای گوشی فقط در همین حالت باید زنگ را ساکت
+     * کند؛ وسط مکالمه باید کارِ همیشگی‌اش را بکند.
+     */
+    val isRinging = MutableLiveData<Boolean>()
+
     val callStatsModel = CallStatsModel()
 
     val callMediaEncryptionModel = CallMediaEncryptionModel {
@@ -452,6 +460,7 @@ class CurrentCallViewModel
         ) {
             isOutgoingRinging.postValue(call.state == Call.State.OutgoingRinging)
             isIncomingEarlyMedia.postValue(call.state == Call.State.IncomingEarlyMedia)
+            isRinging.postValue(LinphoneUtils.isCallIncoming(call.state))
             isOutgoingEarlyMedia.postValue(call.state == Call.State.OutgoingEarlyMedia)
 
             if (::currentCall.isInitialized) {
@@ -1199,6 +1208,7 @@ class CurrentCallViewModel
         isOutgoing.postValue(call.dir == Call.Dir.Outgoing)
         isOutgoingRinging.postValue(state == Call.State.OutgoingRinging)
         isIncomingEarlyMedia.postValue(state == Call.State.IncomingEarlyMedia)
+        isRinging.postValue(LinphoneUtils.isCallIncoming(state))
         isOutgoingEarlyMedia.postValue(state == Call.State.OutgoingEarlyMedia)
 
         isPaused.postValue(isCallPaused())

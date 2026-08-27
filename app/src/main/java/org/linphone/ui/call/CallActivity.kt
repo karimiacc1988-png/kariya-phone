@@ -438,6 +438,39 @@ class CallActivity : GenericActivity() {
         }
     }
 
+    /**
+     * دکمه‌ی صدا وقتی تلفن زنگ می‌خورد، زنگ را ساکت می‌کند.
+     *
+     * خواسته‌ی مالک: «مثل زنگ گوشی — دکمه‌ی صدا را بزنیم باید ساکت شود.»
+     *
+     * ⚠️ **این رفتار در اپ‌های اینترنتی خودکار نیست.** اندروید دکمه‌ی صدا را
+     * فقط برای زنگِ خودِ سیستم به سکوت وصل کرده؛ زنگِ ما را خودِ لینفون پخش
+     * می‌کند و اندروید از آن خبر ندارد، پس باید دستی بگیریمش.
+     *
+     * ⚠️ **بالا و پایین، هر دو.** روی گوشی‌های اندرویدی هر دو جهت زنگ را ساکت
+     * می‌کند و کسی که عجله دارد نگاه نمی‌کند کدام را می‌زند.
+     *
+     * ⚠️ **رویداد مصرف می‌شود (`true`)** تا هم‌زمان بلندی صدا عوض نشود — وگرنه
+     * آدم زنگ را ساکت می‌کند و بی‌خبر صدای گوشی‌اش را هم پایین آورده است.
+     *
+     * 🔺 فقط وقتی تماس در حالِ زنگ‌خوردن است. وسط مکالمه، دکمه‌ی صدا باید
+     * همان کار همیشگی‌اش را بکند.
+     */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val isVolumeKey = event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+            event.keyCode == KeyEvent.KEYCODE_VOLUME_UP
+        if (isVolumeKey &&
+            event.action == KeyEvent.ACTION_DOWN &&
+            callViewModel.isRinging.value == true &&
+            callViewModel.ringingSilenced.value != true
+        ) {
+            Log.i("$TAG Volume key pressed while ringing, silencing the ringtone")
+            callViewModel.silenceRinging()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
     override fun onProvideKeyboardShortcuts(
         data: MutableList<KeyboardShortcutGroup?>?,
         menu: Menu?,
