@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    پس‌زمینه‌ی دکمه‌ی «بی‌صدا» در صفحه‌ی تماس ورودی.
+
+    ⚠️ خاکستری، نه قرمز و نه سبز — و این عمدی است. آن دو رنگ در این صفحه
+    معنای مشخصی دارند: قرمز یعنی تماس قطع می‌شود، سبز یعنی وصل می‌شود.
+    «بی‌صدا» هیچ‌کدام را نمی‌کند، پس نباید رنگِ هیچ‌کدام را داشته باشد.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false"
+        android:drawable="@drawable/shape_squircle_gray_200_background" />
+    <item android:state_pressed="true"
+        android:drawable="@drawable/shape_squircle_gray_200_background" />
+    <item android:state_hovered="true"
+        android:drawable="@drawable/shape_squircle_gray_200_background" />
+    <item
+        android:drawable="@drawable/shape_squircle_gray_600_background" />
+</selector>

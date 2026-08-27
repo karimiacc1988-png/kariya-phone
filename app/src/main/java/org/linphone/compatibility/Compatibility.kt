@@ -97,8 +97,16 @@ class Compatibility {
             }
             return arrayOf(
                 Manifest.permission.READ_CONTACTS,
-                Manifest.permission.RECORD_AUDIO,
-                Manifest.permission.CAMERA
+                Manifest.permission.RECORD_AUDIO
+                /* کاریا: دوربین از این فهرست برداشته شد.
+                 *
+                 * ⚠️ **و همین باعثِ یک باگِ سمج بود.** مجوزِ دوربین را از
+                 * مانیفست حذف کرده‌ایم، پس اندروید هیچ‌وقت آن را نمی‌دهد و
+                 * `checkSelfPermission` همیشه «رد شده» برمی‌گرداند. چون این
+                 * فهرست هنوز دوربین را «لازم» می‌دانست، صفحه‌ی مجوزها هر بار
+                 * بالا می‌آمد و می‌نوشت «دسترسی به دوربین» — برای برنامه‌ای
+                 * که اصلا تصویری ندارد.
+                 */
             )
         }
 

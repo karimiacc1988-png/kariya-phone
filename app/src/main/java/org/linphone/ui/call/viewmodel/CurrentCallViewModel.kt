@@ -144,6 +144,9 @@ class CurrentCallViewModel
 
     val hideVideo = MutableLiveData<Boolean>()
 
+    /** بعد از زدنِ «بی‌صدا»، تا خودِ دکمه بداند دیگر کاری ندارد. */
+    val ringingSilenced = MutableLiveData<Boolean>()
+
     val callStatsModel = CallStatsModel()
 
     val callMediaEncryptionModel = CallMediaEncryptionModel {
@@ -613,6 +616,25 @@ class CurrentCallViewModel
     }
 
     @UiThread
+    /**
+     * زنگ را ساکت می‌کند بی‌آنکه تماس رد شود.
+     *
+     * 🔴 **خواسته‌ی مالک:** کنارِ «جواب دادن» و «رد کردن»، یک «بی‌صدا» هم لازم
+     * است — برای وقتی که آدم سرِ جلسه است و نمی‌خواهد جواب بدهد ولی نمی‌خواهد
+     * تماس را هم قطع کند. رد کردن یعنی تماس‌گیرنده بوقِ اشغال می‌شنود؛ بی‌صدا
+     * یعنی همچنان زنگ می‌خورد برایش، فقط این گوشی ساکت است.
+     *
+     * ⚠️ **تماس دست‌نخورده می‌ماند.** فقط صدا قطع می‌شود؛ می‌شود چند لحظه بعد
+     * همان را جواب داد یا گذاشت به پیام‌گیر برود.
+     */
+    fun silenceRinging() {
+        coreContext.postOnCoreThread { core ->
+            core.stopRinging()
+            Log.i("$TAG Kariya: ringtone silenced, call left ringing for the caller")
+        }
+        ringingSilenced.postValue(true)
+    }
+
     fun answer() {
         coreContext.postOnCoreThread { core ->
             val call = core.calls.find {

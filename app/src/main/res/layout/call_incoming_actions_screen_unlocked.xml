@@ -30,7 +30,7 @@
             app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/answer_call"
+            app:layout_constraintEnd_toStartOf="@id/silence_ringing"
             app:layout_constraintStart_toStartOf="parent"
             app:tint="@color/bc_white" />
 
@@ -49,6 +49,39 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/silence_ringing"
+            app:tint="@color/bc_white" />
+
+        <!--
+            🔴 **بی‌صدا — خواسته‌ی مالک.** کنارِ «جواب دادن» و «رد کردن».
+
+            ⚠️ **این با «رد کردن» فرق دارد و همین نکته‌ی اصلی است.** رد کردن
+            یعنی تماس‌گیرنده بوقِ اشغال می‌شنود و می‌فهمد عمدا رد شده؛ بی‌صدا
+            یعنی برای او همچنان زنگ می‌خورد و فقط این گوشی ساکت است. برای
+            کسی که سرِ جلسه است، این تنها گزینه‌ی درست است.
+
+            ⚠️ بعد از زدن، خودش کم‌رنگ و غیرفعال می‌شود — دکمه‌ای که دو بار
+            زده شود و بار دوم هیچ کاری نکند، آدم را به شک می‌اندازد که اصلا
+            کار کرد یا نه.
+        -->
+        <ImageView
+            android:id="@+id/silence_ringing"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/call_button_size"
+            android:layout_marginEnd="30dp"
+            android:background="@drawable/squircle_gray_button_background"
+            android:onClick="@{() -> viewModel.silenceRinging()}"
+            android:enabled="@{!safeUnbox(viewModel.ringingSilenced)}"
+            android:alpha="@{safeUnbox(viewModel.ringingSilenced) ? 0.4f : 1f}"
+            android:paddingStart="30dp"
+            android:paddingTop="15dp"
+            android:paddingEnd="30dp"
+            android:paddingBottom="15dp"
+            android:src="@drawable/bell_slash"
+            android:contentDescription="@string/kariya_silence_ringing"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/answer_call"
             app:layout_constraintStart_toEndOf="@id/hang_up"
             app:tint="@color/bc_white" />
 

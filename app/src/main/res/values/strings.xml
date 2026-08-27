@@ -1101,4 +1101,6 @@
 
     <!-- نمایش داخلی کارمند در کشو -->
     <string name="kariya_my_extension">داخلی: %1$s</string>
+    <string name="kariya_silence_ringing">بی‌صدا کردن زنگ</string>
+    <string name="kariya_dial_hint">شماره را بگیرید</string>
 </resources>

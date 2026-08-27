@@ -762,7 +762,11 @@ class CoreContext
          */
         if (config.getInt("app", "kariya_contacts_repaired", 0) == 0) {
             config.setString("ui", "contacts_filter", "")            // همه‌ی مخاطبین، نه فقط سیپ
-            config.setBool("app", "fetch_contacts_from_default_directory", false)
+            /* ⚠️ **`true` یعنی فقط دفترچه‌ی خودِ گوشی، و همین را می‌خواهیم.**
+               `false` سراغِ همه‌ی دایرکتوری‌ها می‌رود — شرکتی، ابری، حساب‌های
+               همگام‌شده — که هم کندتر است و هم مخاطبِ تکراری می‌سازد. آن‌چه
+               مخاطبینِ گوشی را برمی‌گرداند فیلترِ بالاست، نه این. */
+            config.setBool("app", "fetch_contacts_from_default_directory", true)
             config.setBool("ui", "hide_contacts_without_phone_number_or_sip_address", false)
             config.setInt("app", "kariya_contacts_repaired", 1)
             Log.i("$TAG Kariya: contacts settings repaired once for upgraded installs")
