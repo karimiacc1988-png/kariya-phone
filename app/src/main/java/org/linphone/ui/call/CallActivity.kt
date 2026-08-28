@@ -88,17 +88,6 @@ class CallActivity : GenericActivity() {
 
     private var isPipSupported = false
 
-    private val requestCameraPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            Log.i("$TAG CAMERA permission has been granted, enabling video")
-            callViewModel.toggleVideo()
-        } else {
-            Log.e("$TAG CAMERA permission has been denied")
-        }
-    }
-
     private val requestRecordAudioPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -250,18 +239,6 @@ class CallActivity : GenericActivity() {
             }
         }
 
-        callViewModel.requestCameraPermission.observe(this) {
-            it.consume {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-                    Log.w("$TAG Asking for CAMERA permission")
-                    requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                } else {
-                    Log.i("$TAG Permission request for CAMERA will be automatically denied, go to android app settings instead")
-                    goToAndroidPermissionSettings()
-                }
-            }
-        }
-
         callViewModel.proximitySensorEnabled.observe(this) { enabled ->
             Log.i("$TAG ${if (enabled) "Enabling" else "Disabling"} proximity sensor")
             coreContext.enableProximitySensor(enabled)
@@ -358,16 +335,14 @@ class CallActivity : GenericActivity() {
             showRedToast(getString(message), icon)
         }
 
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CAMERA
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            Log.e("$TAG CAMERA permission isn't granted")
-            val message = R.string.call_camera_permission_not_granted_toast
-            val icon = R.drawable.warning_circle
-            showRedToast(getString(message), icon)
-        }
+        /* کاریا: سنجشِ مجوز دوربین از این‌جا برداشته شد.
+         *
+         * ⚠️ **این همان «دسترسی به دوربین»ی بود که هر تماس می‌آمد.** دوربین از
+         * مانیفست حذف شده، پس مجوزش هیچ‌وقت «داده‌شده» نیست — و این بلوک در
+         * onStart بود، یعنی هر بار که صفحه‌ی تماس باز می‌شد اعلانِ قرمزِ
+         * «دسترسی دوربین رد شد!» نشان می‌داد. برای برنامه‌ای که تماس تصویری
+         * ندارد، آن اعلان فقط سردرگمی بود.
+         */
     }
 
     override fun onResume() {
