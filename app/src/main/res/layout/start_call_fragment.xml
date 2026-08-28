@@ -115,40 +115,7 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
-
-                    <!--
-                            ⚠️ **یک کادر، دو کار — و باید شکلش عوض شود.**
-
-                            همین کادر هم جست‌وجوی مخاطب است و هم جای شماره
-                            گرفتن. تا حالا در هر دو حالت ذره‌بین داشت و
-                            «جستجو…» می‌نوشت، پس وقتی صفحه‌کلید عددی باز بود
-                            آدم شماره را می‌زد و جلوی چشمش یک نوارِ جست‌وجو
-                            بود — نه جایی که شماره در آن دیده شود.
-
-                            حالا وقتی عددی باز است: ذره‌بین می‌رود، متن درشت
-                            و وسط‌چین می‌شود، و راهنمایش «شماره را بگیرید»
-                            است. همان کادر، ولی معلوم است الان چه‌کاره است.
-                    -->
-                    <androidx.appcompat.widget.AppCompatEditText
-                        style="@style/default_text_style"
-                        android:id="@+id/search_bar"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginEnd="20dp"
-                        android:background="@drawable/edit_text_background"
-                        android:drawableStart="@{viewModel.isNumpadVisible ? null : @drawable/magnifying_glass}"
-                        android:drawablePadding="10dp"
-                        android:drawableTint="?attr/color_main2_600"
-                        android:hint="@{viewModel.isNumpadVisible ? @string/kariya_dial_hint : @string/history_call_start_search_bar_filter_hint}"
-                        android:inputType="text|textUri|textNoSuggestions"
-                        android:paddingStart="15dp"
-                        android:paddingTop="12dp"
-                        android:paddingEnd="45dp"
-                        android:paddingBottom="12dp"
-                        android:text="@={viewModel.searchFilter}"
-                        android:textSize="@{viewModel.isNumpadVisible ? 26f : 17f}"
+                        android:textSize="@{viewModel.isNumpadVisible ? @dimen/kariya_dial_text_size : @dimen/kariya_search_text_size}"
                         android:letterSpacing="@{viewModel.isNumpadVisible ? 0.08f : 0f}"
                         android:textDirection="ltr"
                         android:gravity="@{viewModel.isNumpadVisible ? Gravity.CENTER : Gravity.START|Gravity.CENTER_VERTICAL}"

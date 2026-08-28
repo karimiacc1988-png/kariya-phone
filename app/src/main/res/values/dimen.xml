@@ -116,4 +116,9 @@
     <dimen name="spinner_caret_end_margin">15dp</dimen>
 
     <integer name="media_columns">4</integer>
+    <!-- کادر شماره‌گیری: درشت وقتی صفحه‌کلید عددی باز است، عادی وقتی جست‌وجوست.
+         ⚠️ حتما sp — اتصال داده‌ی textSize عددِ خام را پیکسل می‌گیرد و همین
+         باگِ «شماره‌ی ریز» را ساخته بود. -->
+    <dimen name="kariya_dial_text_size">26sp</dimen>
+    <dimen name="kariya_search_text_size">17sp</dimen>
 </resources>

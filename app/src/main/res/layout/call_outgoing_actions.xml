@@ -103,6 +103,15 @@
             app:layout_constraintStart_toStartOf="@id/change_audio_output"
             app:layout_constraintEnd_toEndOf="@id/change_audio_output" />
 
+        <!--
+            ⚠️ «isOutgoing» و نه «isOutgoingRinging» — و این یک باگ واقعی بود.
+
+            مرکز تلفن ما بوق را به‌صورت رسانه‌ی اولیه می‌فرستد (موزیک به‌جای
+            بوق خشک)، پس حالتِ تماس OutgoingEarlyMedia است نه OutgoingRinging —
+            و دکمه‌ی اسپیکر در تمام مدتِ بوق‌خوردن خاموش می‌ماند. کسی که
+            می‌خواست هندزفری نگذارد، مجبور بود گوشی را تا لحظه‌ی جواب کنار
+            گوشش نگه دارد.
+        -->
         <ImageView
             android:onClick="@{() -> viewModel.changeAudioOutputDevice()}"
             android:id="@+id/change_audio_output"
@@ -110,7 +119,7 @@
             android:layout_height="@dimen/call_button_size"
             android:layout_marginEnd="16dp"
             android:padding="@dimen/call_button_icon_padding"
-            android:enabled="@{viewModel.isOutgoingRinging}"
+                        android:enabled="@{viewModel.isOutgoing}"
             android:contentDescription="@string/content_description_change_output_audio_device"
             android:src="@{viewModel.isHeadsetEnabled ? @drawable/headset : viewModel.isBluetoothEnabled ? @drawable/bluetooth : viewModel.isSpeakerEnabled ? @drawable/speaker_high : @drawable/speaker_slash, default=@drawable/speaker_slash}"
             android:background="@drawable/in_call_button_background_transparent"
