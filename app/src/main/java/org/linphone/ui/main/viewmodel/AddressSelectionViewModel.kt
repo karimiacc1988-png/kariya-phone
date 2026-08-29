@@ -293,15 +293,35 @@ abstract class AddressSelectionViewModel
         previousFilter = filter
 
         val domain = corePreferences.contactsFilter
+
+        /*
+         * ⚠️ **با فیلترِ خالی فقط سوابق تماس، نه همه‌چیز — خواسته‌ی مالک.**
+         *
+         * این صفحه با هر بار باز شدن applyFilter("") می‌گیرد، و جست‌وجو با
+         * فیلترِ خالی و Source.All یعنی پیمایشِ تمامِ مخاطبین گوشی به‌علاوه‌ی
+         * همکاران، ساختنِ مدلِ عکس برای تک‌تکشان و مرتب‌سازی — روی همان
+         * رشته‌ای که ثبت و تماس‌ها را می‌گرداند. نتیجه‌اش این بود که دکمه‌ی
+         * تماس دو ثانیه طول می‌کشید تا صفحه را باز کند.
+         *
+         * حالا صفحه با فهرستِ کوتاهِ تماس‌های اخیر باز می‌شود (فوری)، و به
+         * محضِ تایپِ اولین حرف یا رقم، جست‌وجوی کامل روی همه‌ی منابع اجرا
+         * می‌شود. مخاطبین جایی نرفته‌اند — فقط سرِ باز شدن سرو نمی‌شوند.
+         */
+        val effectiveSources = if (filter.isEmpty()) {
+            MagicSearch.Source.CallLogs.toInt()
+        } else {
+            sources
+        }
+
         Log.i(
-            "$TAG Asking Magic search for contacts matching filter [$filter], domain [$domain] and in sources [$sources]"
+            "$TAG Asking Magic search for contacts matching filter [$filter], domain [$domain] and in sources [$effectiveSources]"
         )
         searchInProgress.postValue(filter.isNotEmpty())
         showResultsLimitReached.postValue(false)
         magicSearch.getContactsListAsync(
             filter,
             domain,
-            sources,
+            effectiveSources,
             MagicSearch.Aggregation.Friend
         )
     }
