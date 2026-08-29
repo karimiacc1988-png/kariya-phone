@@ -66,6 +66,12 @@ class CoreContext
     constructor(val context: Context) : HandlerThread("Core Thread") {
     companion object {
         private const val TAG = "[Core Context]"
+
+        /* نشانی‌های مرکز تلفن. بیرونی همانی است که در نگاشتِ پنل است؛ داخلی
+           آی‌پی خودِ ایزابل در شبکه‌ی دفتر (پورت استاندارد، بدون ترجمه‌ی روتر). */
+        private const val KARIYA_PBX_WAN = "80.210.54.153:55060"
+        private const val KARIYA_PBX_LAN = "192.168.66.4:5060"
+        private const val KARIYA_LAN_PREFIX = "192.168.66."
     }
 
     lateinit var core: Core
@@ -273,6 +279,12 @@ class CoreContext
         }
 
         @WorkerThread
+        override fun onNetworkReachable(core: Core, reachable: Boolean) {
+            /* هر تغییر شبکه — وای‌فای به دیتا و برعکس — مسیرِ مرکز تلفن را
+               بازمی‌سنجد؛ چرایش بالای adjustPbxRoute. */
+            if (reachable) adjustPbxRoute()
+        }
+
         override fun onGlobalStateChanged(core: Core, state: GlobalState, message: String) {
             Log.i("$TAG Global state changed [$state]")
 
@@ -775,6 +787,61 @@ class CoreContext
         Log.i("$TAG Kariya: policy enforced (video off, account settings hidden)")
     }
 
+
+    /**
+     * مسیرِ رسیدن به مرکز تلفن را با شبکه‌ی فعلی هماهنگ می‌کند.
+     *
+     * 🔴 **این علاجِ «روی وای‌فای دفتر صدا نمی‌رود» است.** گوشی و مرکز تلفن
+     * در یک شبکه‌اند، ولی اپ همیشه به آی‌پی عمومی وصل می‌شد؛ یعنی بسته‌های
+     * صدا باید از روتر بیرون می‌رفتند و دوباره برمی‌گشتند تو — چرخشی که
+     * روتر دفتر برای سیگنالینگ انجام می‌دهد ولی برای محدوده‌ی صدا نه. نتیجه:
+     * تماس وصل می‌شد و صدا در هیچ جهتی نمی‌رفت.
+     *
+     * پس: اگر یکی از اینترفیس‌های گوشی در شبکه‌ی دفتر است، ثبت و صدا مستقیم
+     * با آی‌پی داخلیِ مرکز تلفن انجام می‌شود؛ بیرون از دفتر همان آی‌پی عمومی.
+     *
+     * ⚠️ فقط نشانی سرور (پروکسی) عوض می‌شود، نه هویت. هویتِ حساب همان
+     * `sip:120@80.210.54.153` می‌ماند تا با اطلاعاتِ احراز ذخیره‌شده جور
+     * باشد؛ آستریسک همتا را با نام کاربری می‌شناسد و به دامنه‌ی From کاری
+     * ندارد.
+     */
+    @WorkerThread
+    private fun adjustPbxRoute() {
+        val account = core.defaultAccount ?: return
+        val onLan = isOnOfficeLan()
+        val host = if (onLan) KARIYA_PBX_LAN else KARIYA_PBX_WAN
+        val current = account.params.serverAddress?.asStringUriOnly().orEmpty()
+        if (current.contains(host)) return
+
+        val target = Factory.instance().createAddress("sip:$host;transport=udp")
+        if (target == null) {
+            Log.e("$TAG Kariya: could not build PBX address for [$host]")
+            return
+        }
+        val params = account.params.clone()
+        params.serverAddress = target
+        account.params = params
+        Log.i("$TAG Kariya: PBX route set to [$host] (${if (onLan) "office LAN" else "internet"})")
+    }
+
+    /** آیا یکی از اینترفیس‌های فعال در شبکه‌ی دفتر است؟ */
+    private fun isOnOfficeLan(): Boolean {
+        return try {
+            /* حلقه‌ی ساده و نه زنجیره — Enumeration جاوا asSequence ندارد. */
+            val interfaces = java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces())
+            for (network in interfaces) {
+                if (!network.isUp || network.isLoopback) continue
+                for (address in java.util.Collections.list(network.inetAddresses)) {
+                    if (address.hostAddress?.startsWith(KARIYA_LAN_PREFIX) == true) return true
+                }
+            }
+            false
+        } catch (error: Exception) {
+            Log.e("$TAG Kariya: LAN detection failed: $error")
+            false
+        }
+    }
+
     @WorkerThread
     fun startCore() {
         Log.i("$TAG Starting Core")
@@ -797,6 +864,7 @@ class CoreContext
 
     @WorkerThread
     fun onCoreStarted() {
+        adjustPbxRoute()
         Log.i("$TAG Core started, updating configuration if required")
         core.videoCodecPriorityPolicy = CodecPriorityPolicy.Auto
 
