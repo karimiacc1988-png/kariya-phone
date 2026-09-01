@@ -66,12 +66,6 @@ class CoreContext
     constructor(val context: Context) : HandlerThread("Core Thread") {
     companion object {
         private const val TAG = "[Core Context]"
-
-        /* نشانی‌های مرکز تلفن. بیرونی همانی است که در نگاشتِ پنل است؛ داخلی
-           آی‌پی خودِ ایزابل در شبکه‌ی دفتر (پورت استاندارد، بدون ترجمه‌ی روتر). */
-        private const val KARIYA_PBX_WAN = "80.210.54.153:55060"
-        private const val KARIYA_PBX_LAN = "192.168.66.4:5060"
-        private const val KARIYA_LAN_PREFIX = "192.168.66."
     }
 
     lateinit var core: Core
@@ -279,12 +273,6 @@ class CoreContext
         }
 
         @WorkerThread
-        override fun onNetworkReachable(core: Core, reachable: Boolean) {
-            /* هر تغییر شبکه — وای‌فای به دیتا و برعکس — مسیرِ مرکز تلفن را
-               بازمی‌سنجد؛ چرایش بالای adjustPbxRoute. */
-            if (reachable) adjustPbxRoute()
-        }
-
         override fun onGlobalStateChanged(core: Core, state: GlobalState, message: String) {
             Log.i("$TAG Global state changed [$state]")
 
@@ -788,59 +776,25 @@ class CoreContext
     }
 
 
-    /**
-     * مسیرِ رسیدن به مرکز تلفن را با شبکه‌ی فعلی هماهنگ می‌کند.
+    /*
+     * 🔴 **«مسیر هوشمند مرکز تلفن» برداشته شد — و درسش را این‌جا می‌نویسم.**
      *
-     * 🔴 **این علاجِ «روی وای‌فای دفتر صدا نمی‌رود» است.** گوشی و مرکز تلفن
-     * در یک شبکه‌اند، ولی اپ همیشه به آی‌پی عمومی وصل می‌شد؛ یعنی بسته‌های
-     * صدا باید از روتر بیرون می‌رفتند و دوباره برمی‌گشتند تو — چرخشی که
-     * روتر دفتر برای سیگنالینگ انجام می‌دهد ولی برای محدوده‌ی صدا نه. نتیجه:
-     * تماس وصل می‌شد و صدا در هیچ جهتی نمی‌رفت.
+     * برای علاجِ «روی وای‌فای دفتر صدا نمی‌رود»، اپ را طوری کردم که در دفتر
+     * مستقیم با آی‌پی داخلی (192.168.66.4) ثبت شود. نتیجه بدتر از مشکل شد:
+     * هیچ‌کس دیگر ثبت نشد — نه در دفتر نه بیرون — و در لاگ آستریسک حتی یک
+     * تلاشِ ناموفق هم دیده نمی‌شد، یعنی اپ اصلا REGISTER نمی‌فرستاد.
      *
-     * پس: اگر یکی از اینترفیس‌های گوشی در شبکه‌ی دفتر است، ثبت و صدا مستقیم
-     * با آی‌پی داخلیِ مرکز تلفن انجام می‌شود؛ بیرون از دفتر همان آی‌پی عمومی.
+     * ⚠️ **دو دلیل که هر کدام کافی است:**
+     *   ۱. اطلاعات احراز روی دامنه‌ی `80.210.54.153:55060` ذخیره شده. عوض
+     *      کردن نشانی سرور یعنی وقتی مرکز تلفن رمز می‌خواهد، لینفون رمزی
+     *      برای آن دامنه پیدا نمی‌کند.
+     *   ۲. دست‌بردن در `serverAddress` یک حساب ثبت‌شده، حساب را نامعتبر
+     *      می‌کند و ثبت بی‌صدا متوقف می‌شود.
      *
-     * ⚠️ فقط نشانی سرور (پروکسی) عوض می‌شود، نه هویت. هویتِ حساب همان
-     * `sip:120@80.210.54.153` می‌ماند تا با اطلاعاتِ احراز ذخیره‌شده جور
-     * باشد؛ آستریسک همتا را با نام کاربری می‌شناسد و به دامنه‌ی From کاری
-     * ندارد.
+     * ⚠️ **جای درستِ این علاج اپ نیست، روتر دفتر است** (چرخش NAT برای محدوده‌ی
+     * صدا). هر تلاش بعدی باید اول روی یک گوشی آزمایش شود، نه مستقیم روی
+     * نسخه‌ای که همه نصب می‌کنند.
      */
-    @WorkerThread
-    private fun adjustPbxRoute() {
-        val account = core.defaultAccount ?: return
-        val onLan = isOnOfficeLan()
-        val host = if (onLan) KARIYA_PBX_LAN else KARIYA_PBX_WAN
-        val current = account.params.serverAddress?.asStringUriOnly().orEmpty()
-        if (current.contains(host)) return
-
-        val target = Factory.instance().createAddress("sip:$host;transport=udp")
-        if (target == null) {
-            Log.e("$TAG Kariya: could not build PBX address for [$host]")
-            return
-        }
-        val params = account.params.clone()
-        params.serverAddress = target
-        account.params = params
-        Log.i("$TAG Kariya: PBX route set to [$host] (${if (onLan) "office LAN" else "internet"})")
-    }
-
-    /** آیا یکی از اینترفیس‌های فعال در شبکه‌ی دفتر است؟ */
-    private fun isOnOfficeLan(): Boolean {
-        return try {
-            /* حلقه‌ی ساده و نه زنجیره — Enumeration جاوا asSequence ندارد. */
-            val interfaces = java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces())
-            for (network in interfaces) {
-                if (!network.isUp || network.isLoopback) continue
-                for (address in java.util.Collections.list(network.inetAddresses)) {
-                    if (address.hostAddress?.startsWith(KARIYA_LAN_PREFIX) == true) return true
-                }
-            }
-            false
-        } catch (error: Exception) {
-            Log.e("$TAG Kariya: LAN detection failed: $error")
-            false
-        }
-    }
 
     @WorkerThread
     fun startCore() {
@@ -864,7 +818,6 @@ class CoreContext
 
     @WorkerThread
     fun onCoreStarted() {
-        adjustPbxRoute()
         Log.i("$TAG Core started, updating configuration if required")
         core.videoCodecPriorityPolicy = CodecPriorityPolicy.Auto
 
